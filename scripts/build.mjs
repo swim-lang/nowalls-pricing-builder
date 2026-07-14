@@ -1,6 +1,8 @@
 import { build } from "esbuild";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 
+const assetVersion = Date.now().toString(36);
+
 const indexHtml = `<!doctype html>
 <html lang="en">
   <head>
@@ -92,7 +94,7 @@ const indexHtml = `<!doctype html>
         }
       }
     </style>
-    <script type="module" crossorigin src="./assets/index.js"></script>
+    <script type="module" crossorigin src="./assets/index.js?v=${assetVersion}"></script>
   </head>
   <body>
     <div id="root"></div>
