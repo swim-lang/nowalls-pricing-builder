@@ -729,6 +729,8 @@ function NoWallsLogo({ className }: { className?: string }) {
 }
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
+  const availablePackages = Object.values(PACKAGE_CONFIG.packages);
+
   return (
     <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
       <div className="animate-fade-up">
@@ -742,42 +744,49 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         <p className="mt-6 max-w-2xl text-lg leading-8 text-[#606266] sm:text-xl">
           Answer a few quick questions and we'll recommend the package that fits the property, your goals, and the way you want buyers to feel.
         </p>
-        <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-9 flex">
           <Button size="lg" onClick={onStart}>
             Build my package
             <ArrowRight className="h-4 w-4" />
           </Button>
-          <a
-            href="#compare-preview"
-            className="inline-flex h-14 items-center justify-center rounded-full border border-black/15 bg-white px-7 text-base font-medium text-[#111011] transition hover:bg-[#f7f7f7]"
-          >
-            Preview packages
-          </a>
         </div>
       </div>
 
-      <div id="compare-preview" className="rounded-[2rem] border border-white bg-white p-4 shadow-soft-xl">
-        <div className="rounded-[1.5rem] border border-black/10 bg-[#111011] p-6 text-white">
+      <div className="rounded-[2rem] border border-white bg-white p-4 shadow-soft-xl">
+        <div className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-[#111011] p-6 text-white">
           <div className="flex items-center justify-between gap-4">
-            <p className="text-sm uppercase tracking-[0.2em] text-white/55">Recommendation preview</p>
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-white/55">Available packages</p>
+              <p className="mt-2 text-2xl font-semibold tracking-normal">A fit for every listing</p>
+            </div>
             <img src={NO_WALLS_FAVICON_URL} alt="" className="h-8 w-8 rounded-lg bg-white" />
           </div>
-          <div className="mt-10">
-            <p className="text-sm text-white/60">Your Recommended Package</p>
-            <h2 className="mt-2 text-4xl font-semibold tracking-normal">Signature</h2>
-            <p className="mt-3 max-w-sm text-white/70">For listings that need visual depth, a stronger launch, and media that feels less formulaic.</p>
-          </div>
-          <div className="mt-9 grid gap-3">
-            {["Professional photos", "Drone photos", "Video", "Property website"].map((item) => (
-              <div key={item} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3">
-                <span className="text-sm text-white/78">{item}</span>
-                <Check className="h-4 w-4 text-[#d6dbdc]" />
-              </div>
-            ))}
-          </div>
-          <div className="mt-8 rounded-2xl bg-white p-5 text-[#111011]">
-            <p className="text-sm font-medium">Starting package price</p>
-            <p className="mt-1 text-3xl font-semibold">$714</p>
+
+          <div className="mt-6 h-[430px] overflow-hidden sm:h-[470px]">
+            <div className="flex animate-package-scroll flex-col gap-3 motion-reduce:animate-none hover:[animation-play-state:paused]">
+              {[0, 1].map((setIndex) => (
+                <div key={setIndex} className="grid gap-3" aria-hidden={setIndex === 1}>
+                  {availablePackages.map((packageItem) => {
+                    const pricing = getPackagePricing(packageItem);
+                    return (
+                      <div
+                        key={`${setIndex}-${packageItem.id}`}
+                        className="flex h-[88px] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">{packageItem.category.replace("-", " ")}</p>
+                          <p className="mt-1 text-lg font-semibold leading-6 tracking-normal text-white">{packageItem.name}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs text-white/45">{pricing.isStarting ? "Starting at" : "Package"}</p>
+                          <p className="mt-1 text-lg font-semibold">${pricing.price.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -974,9 +983,6 @@ function RecommendationScreen({
               <CircleDollarSign className="h-4 w-4" />
               Book this package
             </Button>
-            <Button size="lg" variant="outlineDark" onClick={() => console.log("Customize package", recommendation.package.name)}>
-              Customize this package
-            </Button>
             <Button size="lg" variant="ghostDark" onClick={onStartOver}>
               Start over
             </Button>
@@ -1126,7 +1132,7 @@ function Button({
 }: {
   children: ReactNode;
   className?: string;
-  variant?: "default" | "ghost" | "gold" | "outlineDark" | "ghostDark";
+  variant?: "default" | "ghost" | "gold" | "ghostDark";
   size?: "default" | "lg";
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
@@ -1138,7 +1144,6 @@ function Button({
         variant === "default" && "bg-[#111011] text-white hover:bg-black",
         variant === "ghost" && "bg-transparent text-[#606266] hover:bg-[#f1f1f1]",
         variant === "gold" && "bg-white text-[#111011] hover:bg-[#d6dbdc]",
-        variant === "outlineDark" && "border border-white/20 bg-white/10 text-white hover:bg-white hover:text-[#111011]",
         variant === "ghostDark" && "bg-transparent text-white/75 hover:bg-white/10",
         className,
       )}

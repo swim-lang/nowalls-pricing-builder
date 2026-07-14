@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 
 const indexHtml = `<!doctype html>
 <html lang="en">
@@ -20,12 +20,17 @@ const indexHtml = `<!doctype html>
                 "soft-xl": "0 24px 90px rgba(48, 38, 28, 0.12)"
               },
               animation: {
-                "fade-up": "fadeUp 480ms ease-out both"
+                "fade-up": "fadeUp 480ms ease-out both",
+                "package-scroll": "packageScroll 72s linear infinite"
               },
               keyframes: {
                 fadeUp: {
                   "0%": { opacity: "0", transform: "translateY(14px)" },
                   "100%": { opacity: "1", transform: "translateY(0)" }
+                },
+                packageScroll: {
+                  "0%": { transform: "translateY(0)" },
+                  "100%": { transform: "translateY(calc(-50% - 0.375rem))" }
                 }
               }
             }
@@ -77,6 +82,7 @@ const indexHtml = `<!doctype html>
 
 for (const outputDirectory of ["dist", "docs"]) {
   await mkdir(`${outputDirectory}/assets`, { recursive: true });
+  await rm(`${outputDirectory}/assets/index.css`, { force: true });
 
   await build({
     entryPoints: ["src/main.tsx"],
@@ -87,6 +93,7 @@ for (const outputDirectory of ["dist", "docs"]) {
     minify: true,
     sourcemap: false,
     loader: {
+      ".css": "empty",
       ".ts": "ts",
       ".tsx": "tsx",
     },
