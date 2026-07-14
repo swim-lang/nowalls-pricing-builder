@@ -763,7 +763,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
           </div>
 
           <div className="mt-6 h-[430px] overflow-hidden sm:h-[470px]">
-            <div className="flex animate-package-scroll flex-col gap-3 motion-reduce:animate-none hover:[animation-play-state:paused]">
+            <div className="package-scroll-track flex flex-col gap-3">
               {[0, 1].map((setIndex) => (
                 <div key={setIndex} className="grid gap-3" aria-hidden={setIndex === 1}>
                   {availablePackages.map((packageItem) => {

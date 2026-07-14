@@ -12,16 +12,11 @@ export default {
       },
       animation: {
         "fade-up": "fadeUp 480ms ease-out both",
-        "package-scroll": "packageScroll 72s linear infinite",
       },
       keyframes: {
         fadeUp: {
           "0%": { opacity: "0", transform: "translateY(14px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        packageScroll: {
-          "0%": { transform: "translateY(0)" },
-          "100%": { transform: "translateY(calc(-50% - 0.375rem))" },
         },
       },
     },

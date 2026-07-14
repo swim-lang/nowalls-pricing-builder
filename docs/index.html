@@ -17,17 +17,12 @@
                 "soft-xl": "0 24px 90px rgba(48, 38, 28, 0.12)"
               },
               animation: {
-                "fade-up": "fadeUp 480ms ease-out both",
-                "package-scroll": "packageScroll 72s linear infinite"
+                "fade-up": "fadeUp 480ms ease-out both"
               },
               keyframes: {
                 fadeUp: {
                   "0%": { opacity: "0", transform: "translateY(14px)" },
                   "100%": { opacity: "1", transform: "translateY(0)" }
-                },
-                packageScroll: {
-                  "0%": { transform: "translateY(0)" },
-                  "100%": { transform: "translateY(calc(-50% - 0.375rem))" }
                 }
               }
             }
@@ -67,6 +62,31 @@
 
       details > summary::-webkit-details-marker {
         display: none;
+      }
+
+      .package-scroll-track {
+        animation: package-scroll 72s linear infinite;
+        will-change: transform;
+      }
+
+      .package-scroll-track:hover {
+        animation-play-state: paused;
+      }
+
+      @keyframes package-scroll {
+        from {
+          transform: translateY(0);
+        }
+
+        to {
+          transform: translateY(calc(-50% - 0.375rem));
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .package-scroll-track {
+          animation: none;
+        }
       }
     </style>
     <script type="module" crossorigin src="./assets/index.js"></script>
