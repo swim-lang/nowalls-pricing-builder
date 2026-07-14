@@ -18,7 +18,7 @@ try {
     logLevel: "silent",
   });
 
-  const { getRecommendation, PACKAGE_CONFIG } = await import(pathToFileURL(bundlePath).href);
+  const { buildBookingMailto, getRecommendation, PACKAGE_CONFIG } = await import(pathToFileURL(bundlePath).href);
 
   const matrixExpectations = {
     starter: [195, 229, 265, 300, 335, 370, 405],
@@ -95,7 +95,22 @@ try {
     129,
   );
 
-  console.log("No Walls pricing matrices and recommendation paths verified.");
+  const bookingMailto = buildBookingMailto({
+    name: "Avery Agent",
+    email: "avery@example.com",
+    propertyAddress: "123 Main Street",
+    notes: "Hoping to shoot next Thursday.",
+    packageName: "Essentials",
+    packagePrice: "$530",
+  });
+  const bookingUrl = new URL(bookingMailto);
+  assert.equal(bookingUrl.pathname, "hello@nowallsrealestate.com");
+  assert.equal(bookingUrl.searchParams.get("subject"), "Booking request: Essentials");
+  assert.match(bookingUrl.searchParams.get("body"), /Package price: \$530/);
+  assert.match(bookingUrl.searchParams.get("body"), /Avery Agent/);
+  assert.match(bookingUrl.searchParams.get("body"), /123 Main Street/);
+
+  console.log("No Walls pricing matrices, recommendations, and booking email verified.");
 } finally {
   await rm(tempDirectory, { recursive: true, force: true });
 }

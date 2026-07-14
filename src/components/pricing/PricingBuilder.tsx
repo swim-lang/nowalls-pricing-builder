@@ -11,6 +11,7 @@ import {
   Layers3,
   Map,
   RotateCcw,
+  Send,
   Sparkles,
 } from "lucide-react";
 
@@ -86,8 +87,18 @@ type Recommendation = {
   sizeLabel: string;
 };
 
+type BookingRequestDetails = {
+  name: string;
+  email: string;
+  propertyAddress?: string;
+  notes?: string;
+  packageName: string;
+  packagePrice: string;
+};
+
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ");
 const NO_WALLS_FAVICON_URL = "https://framerusercontent.com/images/LPlC9tqmKBjfv4PD9XJCmiZDn9s.png";
+const NO_WALLS_BOOKING_EMAIL = "hello@nowallsrealestate.com";
 
 const iconMap = {
   home: Home,
@@ -479,6 +490,25 @@ const answerLabel = (questionId: QuestionId, value: string) => {
 };
 
 const formatPrice = (price: number, isStarting = false) => `${isStarting ? "Starting at " : ""}$${price.toLocaleString()}`;
+
+export function buildBookingMailto(details: BookingRequestDetails) {
+  const body = [
+    "Hi No Walls,",
+    "",
+    "I'd like to book the following package:",
+    "",
+    `Package: ${details.packageName}`,
+    `Package price: ${details.packagePrice}`,
+    `Name: ${details.name}`,
+    `Email: ${details.email}`,
+    details.propertyAddress ? `Property address: ${details.propertyAddress}` : undefined,
+    details.notes ? `Notes: ${details.notes}` : undefined,
+  ]
+    .filter((line): line is string => line !== undefined)
+    .join("\n");
+
+  return `mailto:${NO_WALLS_BOOKING_EMAIL}?subject=${encodeURIComponent(`Booking request: ${details.packageName}`)}&body=${encodeURIComponent(body)}`;
+}
 
 export function getPackagePricing(packageConfig: PackageConfig, size: SizeTier = "not_sure") {
   if (packageConfig.flatPrice !== undefined) {
@@ -951,6 +981,12 @@ function RecommendationScreen({
   onEdit: (questionId: QuestionId) => void;
 }) {
   const Icon = iconMap[PACKAGE_ICONS[recommendation.package.id]];
+  const [bookingOpen, setBookingOpen] = useState(false);
+
+  const openBookingForm = () => {
+    setBookingOpen(true);
+    window.setTimeout(() => document.getElementById("booking-request")?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+  };
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 animate-fade-up lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -979,7 +1015,7 @@ function RecommendationScreen({
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" variant="gold" onClick={() => console.log("Book package", recommendation.package.name)}>
+            <Button size="lg" variant="gold" onClick={openBookingForm} aria-expanded={bookingOpen} aria-controls="booking-request">
               <CircleDollarSign className="h-4 w-4" />
               Book this package
             </Button>
@@ -987,6 +1023,8 @@ function RecommendationScreen({
               Start over
             </Button>
           </div>
+
+          {bookingOpen && <BookingRequestForm recommendation={recommendation} />}
         </div>
       </div>
 
@@ -999,6 +1037,73 @@ function RecommendationScreen({
         </p>
       </aside>
     </div>
+  );
+}
+
+function BookingRequestForm({ recommendation }: { recommendation: Recommendation }) {
+  const packagePrice = formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const mailto = buildBookingMailto({
+      name: String(formData.get("name") ?? "").trim(),
+      email: String(formData.get("email") ?? "").trim(),
+      propertyAddress: String(formData.get("propertyAddress") ?? "").trim(),
+      notes: String(formData.get("notes") ?? "").trim(),
+      packageName: recommendation.package.name,
+      packagePrice,
+    });
+
+    window.location.assign(mailto);
+  };
+
+  const fieldClass =
+    "mt-2 h-12 w-full rounded-xl border border-white/15 bg-white/[0.07] px-4 text-base text-white outline-none transition placeholder:text-white/35 focus:border-white/55 focus:bg-white/[0.1]";
+
+  return (
+    <form id="booking-request" className="mt-8 border-t border-white/12 pt-8" onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/45">Booking request</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-normal">Tell us where to follow up</h3>
+        </div>
+        <div className="border-l border-white/15 pl-4 sm:text-right">
+          <p className="text-sm text-white/50">{recommendation.package.name}</p>
+          <p className="mt-1 text-xl font-semibold">{packagePrice}</p>
+        </div>
+      </div>
+
+      <div className="mt-7 grid gap-5 sm:grid-cols-2">
+        <label className="text-sm font-medium text-white/78">
+          Name
+          <input className={fieldClass} name="name" autoComplete="name" required />
+        </label>
+        <label className="text-sm font-medium text-white/78">
+          Email
+          <input className={fieldClass} name="email" type="email" autoComplete="email" inputMode="email" required />
+        </label>
+      </div>
+
+      <label className="mt-5 block text-sm font-medium text-white/78">
+        Property address <span className="font-normal text-white/40">(optional)</span>
+        <input className={fieldClass} name="propertyAddress" autoComplete="street-address" placeholder="123 Main Street" />
+      </label>
+
+      <label className="mt-5 block text-sm font-medium text-white/78">
+        Anything else? <span className="font-normal text-white/40">(optional)</span>
+        <textarea
+          className="mt-2 min-h-28 w-full resize-y rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3 text-base text-white outline-none transition placeholder:text-white/35 focus:border-white/55 focus:bg-white/[0.1]"
+          name="notes"
+          placeholder="Timing, access, or anything helpful for the shoot"
+        />
+      </label>
+
+      <Button className="mt-6 w-full sm:w-auto" type="submit" size="lg" variant="gold">
+        <Send className="h-4 w-4" />
+        Send booking request
+      </Button>
+    </form>
   );
 }
 
