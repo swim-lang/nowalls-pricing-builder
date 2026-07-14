@@ -10,8 +10,15 @@
         config: {
           theme: {
             extend: {
-              boxShadow: { "soft-xl": "0 24px 90px rgba(48,38,28,.12)" },
-              animation: { "fade-up": "fadeUp 480ms ease-out both" },
+              fontFamily: {
+                sans: ["Inter", "Helvetica Neue", "Arial", "system-ui", "sans-serif"]
+              },
+              boxShadow: {
+                "soft-xl": "0 24px 90px rgba(48, 38, 28, 0.12)"
+              },
+              animation: {
+                "fade-up": "fadeUp 480ms ease-out both"
+              },
               keyframes: {
                 fadeUp: {
                   "0%": { opacity: "0", transform: "translateY(14px)" },
@@ -25,153 +32,41 @@
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      :root { color: #111011; background: #f1f1f1; -webkit-font-smoothing: antialiased; }
-      * { box-sizing: border-box; }
-      body { margin: 0; min-width: 320px; min-height: 100vh; font-family: Inter, "Helvetica Neue", Arial, system-ui, sans-serif; }
-      button, a { -webkit-tap-highlight-color: transparent; }
-      details > summary::-webkit-details-marker { display: none; }
+      :root {
+        color: #111011;
+        background: #f1f1f1;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+      }
+
+      button,
+      a {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      details > summary::-webkit-details-marker {
+        display: none;
+      }
     </style>
+    <script type="module" crossorigin src="./assets/index.js"></script>
   </head>
   <body>
-    <div id="app"></div>
-
-    <script>
-      const packageConfig = {
-        squareFootageModifiers: { under_1000: 0, "1000_2000": 50, "2000_3500": 100, "3500_5000": 200, over_5000: "custom_quote", not_sure: 0 },
-        packages: {
-          starter: { id: "starter", name: "Starter", purpose: "Simple listing, lower budget, essential photos.", bestFor: "Simple listings that need clean MLS-ready media", startingPrice: 195, category: "core", includes: ["Professional listing photos", "Basic delivery", "MLS-ready gallery"] },
-          essentials: { id: "essentials", name: "Essentials", purpose: "Polished standard listing.", bestFor: "Standard listings that need a professional presentation", startingPrice: 395, category: "core", includes: ["Professional photos", "Drone photos", "Floor plan", "Property website or listing page", "Basic marketing assets"] },
-          signature: { id: "signature", name: "Signature", purpose: "Strong listing presentation with more visual depth.", bestFor: "Listings where speed, clarity, and visual depth matter", startingPrice: 695, category: "core", includes: ["Professional photos", "Drone photos", "Video", "Floor plan", "Property website", "Social-friendly assets", "Virtual twilight"] },
-          premier: { id: "premier", name: "Premier", purpose: "Premium or higher-value listings.", bestFor: "Luxury, high-value, or story-driven properties", startingPrice: 995, category: "core", includes: ["Full photo package", "Drone photos and video", "Cinematic listing video", "Floor plan", "Property website", "Twilight or virtual twilight", "Social content kit", "Neighborhood or lifestyle content"] },
-          socialBoostLite: { id: "socialBoostLite", name: "Social Boost Lite", purpose: "A few strong assets for agents who want usable social content.", bestFor: "Agents who want simple social-ready listing content", startingPrice: 395, category: "social", includes: ["1 reel", "Short-form clips", "Social-ready exports"] },
-          socialBoostPro: { id: "socialBoostPro", name: "Social Boost Pro", purpose: "For agents who want the listing to build their personal brand too.", bestFor: "Agents treating social as part of the listing strategy", startingPrice: 695, category: "social", includes: ["Multiple reels", "Vertical video edits", "Social captions or content prompts", "Agent-facing content kit"] },
-          landLot: { id: "landLot", name: "Land / Lot Package", purpose: "Clear visual context for land, lots, and acreage.", bestFor: "Land, lots, acreage, and location-driven listings", startingPrice: 495, category: "land", includes: ["Land photography", "Drone photos", "Boundary graphics", "Neighborhood / access imagery", "Optional video"] },
-          preListing: { id: "preListing", name: "Pre-Listing Package", purpose: "Coming soon content with a stronger launch signal.", bestFor: "Pre-listing campaigns and coming-soon announcements", startingPrice: 349, category: "pre-listing", includes: ["Exterior photos", "Drone photos", "Coming soon content", "Social teaser assets"] }
-        }
-      };
-
-      const questions = [
-        { id: "propertyType", eyebrow: "Property", question: "What kind of property are you marketing?", options: [
-          ["standard", "Standard residential listing", "A typical home, condo, or townhome."],
-          ["luxury", "Luxury or high-value listing", "A premium property where presentation carries more weight."],
-          ["land", "Land, lot, or acreage", "A property where boundaries, access, and context matter."],
-          ["pre_listing", "Pre-listing / coming soon content", "Early launch assets before the full listing push."],
-          ["not_sure", "I'm not sure yet", "No problem. We'll keep the recommendation flexible."]
-        ] },
-        { id: "goal", eyebrow: "Goal", question: "What are you trying to accomplish?", options: [
-          ["essentials_only", "I just need the essentials", "Clean, simple media for the listing."],
-          ["polished", "I want the listing to look polished and professional", "A balanced package with strong basics."],
-          ["sell_fast", "I need to sell this fast", "More media depth to help the listing move."],
-          ["premium", "I want this listing to feel premium", "A higher-touch presentation for a stronger first impression."],
-          ["personal_brand", "I want content that also builds my personal brand", "Listing media plus agent-facing social assets."],
-          ["custom", "I want something more custom", "A flexible recommendation with room to tailor production."]
-        ] },
-        { id: "socialImportance", eyebrow: "Social", question: "How important is social content for this listing?", options: [
-          ["not_important", "Not important, I just need listing media", "Focus the package on MLS and listing presentation."],
-          ["somewhat", "Somewhat important, I want a few usable assets", "Add a light social layer."],
-          ["very", "Very important, I want reels and content for my channels", "Prioritize vertical and short-form deliverables."],
-          ["major", "This is a major part of my marketing strategy", "Build around listing impact and personal brand lift."]
-        ] },
-        { id: "size", eyebrow: "Size", question: "What is the approximate property size?", options: [
-          ["under_1000", "Under 1,000 sq ft", "Compact property."],
-          ["1000_2000", "1,000 to 2,000 sq ft", "Small to mid-size property."],
-          ["2000_3500", "2,000 to 3,500 sq ft", "Mid-size listing."],
-          ["3500_5000", "3,500 to 5,000 sq ft", "Larger property with more coverage needs."],
-          ["over_5000", "Over 5,000 sq ft", "Custom quote recommended."],
-          ["not_sure", "Not sure", "We'll keep the estimate flexible."]
-        ] },
-        { id: "knownNeeds", eyebrow: "Needs", multiple: true, question: "What do you already know you need?", options: [
-          ["photos", "Photos"], ["video", "Video"], ["drone", "Drone"], ["floor_plan", "Floor plan"], ["website", "Website"], ["social_reels", "Social reels"], ["twilight", "Twilight or virtual twilight"], ["neighborhood", "Neighborhood / lifestyle content"], ["recommend", "Not sure, recommend it for me"]
-        ] }
-      ];
-
-      const state = { step: -1, answers: {} };
-      const app = document.querySelector("#app");
-      const pkg = (id) => packageConfig.packages[id];
-      const label = (qid, val) => (questions.find(q => q.id === qid)?.options.find(o => o[0] === val)?.[1] || val);
-      const price = (val) => val === "custom_quote" ? "Custom quote recommended" : `Starting at $${val.toLocaleString()}`;
-      const reset = () => { state.step = -1; state.answers = {}; render(); };
-
-      function logo() {
-        return `<svg class="h-auto w-36 shrink-0 text-black sm:w-44" viewBox="0 0 411.28 52.35" aria-label="No Walls" role="img"><path fill="currentColor" d="m86.6 1.23 20.59 29.38V1.23h10.66v50.4h-8.93L88.25 22.25v29.38H77.59V1.23h9Zm87.43 25.2c0 14.76-11.02 25.92-25.71 25.92s-25.71-11.16-25.71-25.92S133.63.51 148.32.51s25.71 11.16 25.71 25.92Zm-40.47 0c0 8.86 6.34 15.55 14.76 15.55s14.76-6.7 14.76-15.55-6.34-15.55-14.76-15.55-14.76 6.7-14.76 15.55Zm124.03-25.2-16.71 50.4h-8.64l-10.58-32.4-10.44 32.4h-8.71l-16.78-50.4h11.38l9.94 32.4 10.43-32.4h8.64l10.37 32.4 9.87-32.4h11.23Zm40.48 50.4h-11.59l-3.17-8.42h-19.44l-3.24 8.42h-11.31l20.02-50.4h8.64l20.09 50.4Zm-18.36-17.71-6.05-15.99-6.19 15.99h12.24Zm32.48-32.69v40.18h23.04v10.22h-33.7V1.23h10.66Zm36.95 0v40.18h23.04v10.22h-33.7V1.23h10.66Zm24.55 33.69h10.51c0 4.46 3.53 7.34 8.57 7.34 4.68 0 7.92-2.16 7.92-5.47 0-8.93-26.5-2.95-26.5-21.39 0-8.64 7.42-14.91 17.35-14.91 12.46 0 18.15 7.92 18.15 16.78h-11.02c-.07-3.82-2.88-6.7-7.49-6.7-4.03 0-6.55 1.8-6.55 4.75 0 8.35 26.64 2.23 26.64 21.46 0 8.93-7.85 15.55-18.51 15.55s-19.08-7.34-19.08-17.43ZM27.4 18.13l9.07 9.07L54.6 9.07 45.53 0l-9.07 9.07L27.38 0 9.25 18.13l9.08 9.07 9.07-9.07z"/><path fill="currentColor" d="m36.46 33.72-9.08-9.07-9.15 9.15-9.16-9.15L0 33.72l18.13 18.13.1-.1.1.1 9.07-9.07 9.07 9.07L54.6 33.72l-9.07-9.07-9.07 9.07z"/></svg>`;
-      }
-
-      function getRecommendation() {
-        const a = state.answers, needs = new Set(a.knownNeeds || []);
-        let id = "essentials", reason = "This gives you a polished listing presence without overbuilding the production.";
-        if (a.propertyType === "land") [id, reason] = ["landLot", "Land listings benefit from drone context, boundary graphics, and access imagery more than a standard interior-first package."];
-        else if (a.propertyType === "pre_listing") [id, reason] = ["preListing", "A pre-listing package gives you strong coming-soon assets without waiting for the full listing launch."];
-        else if (a.propertyType === "luxury") [id, reason] = ["premier", "A higher-value listing needs a premium presentation with video, social assets, twilight, and lifestyle context."];
-        else if (a.goal === "essentials_only") [id, reason] = ["starter", "You asked for the essentials, so this keeps the recommendation simple and budget-conscious."];
-        else if (a.goal === "polished") [id, reason] = ["essentials", "This balances professional photos, drone, floor plan, and a simple web presence for a clean launch."];
-        else if (a.goal === "sell_fast") [id, reason] = ["signature", "A faster sale usually needs more visual depth, especially video, website, and social-friendly assets."];
-        else if (a.goal === "premium" || a.goal === "custom") [id, reason] = ["premier", "This gives the listing a fuller, more elevated media story with room for custom production needs."];
-        else if (a.goal === "personal_brand") [id, reason] = [a.socialImportance === "major" ? "premier" : "signature", "You are marketing both the property and your brand, so the recommendation includes stronger video and social-ready output."];
-        const high = ["video", "drone", "website", "social_reels"].filter(n => needs.has(n)).length;
-        if (!["land", "pre_listing"].includes(a.propertyType)) {
-          if (high >= 4 || a.socialImportance === "major") [id, reason] = ["premier", "Your answers point to a more complete launch with video, drone, web, and social content working together."];
-          else if (high >= 3 && id !== "premier") [id, reason] = ["signature", "You selected several higher-impact deliverables, so Signature is the better fit than a basic package."];
-        }
-        const addOns = [];
-        if (["very", "major"].includes(a.socialImportance) || a.goal === "personal_brand" || needs.has("social_reels")) addOns.push(pkg("socialBoostPro"));
-        else if (a.socialImportance === "somewhat") addOns.push(pkg("socialBoostLite"));
-        const sizeMod = packageConfig.squareFootageModifiers[a.size || "not_sure"];
-        const custom = sizeMod === "custom_quote";
-        return { package: pkg(id), reason, addOns: addOns.filter(x => x.id !== id), estimated: custom ? "custom_quote" : pkg(id).startingPrice + sizeMod, custom };
-      }
-
-      function chrome(inner) {
-        return `<section class="min-h-screen overflow-hidden bg-[#f1f1f1] text-[#111011]"><div class="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,.95),transparent_44%),linear-gradient(135deg,rgba(214,219,220,.62),rgba(241,241,241,0))]"></div><div class="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8"><header class="flex items-center justify-between gap-4 rounded-full border border-black/5 bg-white px-4 py-3 shadow-[0_16px_55px_rgba(0,0,0,.06)]"><div class="flex min-w-0 items-center gap-4">${logo()}<div class="hidden h-8 w-px bg-black/10 sm:block"></div><p class="hidden text-sm font-semibold uppercase tracking-[.16em] text-[#828487] sm:block">Pricing Builder Demo</p></div>${state.step >= 0 ? `<button onclick="reset()" class="inline-flex h-10 items-center justify-center rounded-full px-3 text-sm font-medium text-[#606266] transition hover:bg-[#f1f1f1]">Start fresh</button>` : ""}</header><main class="flex flex-1 items-center py-8 sm:py-12"><div class="w-full">${inner}</div></main></div></section>`;
-      }
-
-      function renderIntro() {
-        return chrome(`<div class="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr]"><div class="animate-fade-up"><div class="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold uppercase tracking-[.12em] text-[#828487] shadow-sm">✦ Real Estate Marketing Done Differently</div><h1 class="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[#111011] sm:text-6xl lg:text-7xl">Forget the pricing table. Build the right listing gameplan.</h1><p class="mt-6 max-w-2xl text-lg leading-8 text-[#606266] sm:text-xl">Answer a few quick questions and we'll recommend the package that fits the property, your goals, and the way you want buyers to feel.</p><div class="mt-9 flex flex-col gap-3 sm:flex-row"><button onclick="state.step=0;render()" class="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[#111011] px-7 text-base font-medium text-white transition hover:bg-black">Build my package →</button><a href="#compare-preview" class="inline-flex h-14 items-center justify-center rounded-full border border-black/15 bg-white px-7 text-base font-medium text-[#111011] transition hover:bg-[#f7f7f7]">Preview packages</a></div></div><div id="compare-preview" class="rounded-[2rem] border border-white bg-white p-4 shadow-soft-xl"><div class="rounded-[1.5rem] border border-black/10 bg-[#111011] p-6 text-white"><div class="flex items-center justify-between gap-4"><p class="text-sm uppercase tracking-[.2em] text-white/55">Recommendation preview</p><img src="https://framerusercontent.com/images/LPlC9tqmKBjfv4PD9XJCmiZDn9s.png" class="h-8 w-8 rounded-lg bg-white" alt=""></div><div class="mt-10"><p class="text-sm text-white/60">Your Recommended Package</p><h2 class="mt-2 text-4xl font-semibold tracking-normal">Signature</h2><p class="mt-3 max-w-sm text-white/70">For listings that need visual depth, a stronger launch, and media that feels less formulaic.</p></div><div class="mt-9 grid gap-3">${["Professional photos","Drone photos","Video","Property website"].map(x => `<div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3"><span class="text-sm text-white/80">${x}</span><span>✓</span></div>`).join("")}</div><div class="mt-8 rounded-2xl bg-white p-5 text-[#111011]"><p class="text-sm font-medium">Estimated starting price</p><p class="mt-1 text-3xl font-semibold">$695+</p></div></div></div></div>`);
-      }
-
-      function renderQuestion() {
-        const q = questions[state.step];
-        const progress = Math.round(((state.step + 1) / questions.length) * 100);
-        const selected = q.multiple ? (state.answers[q.id] || []) : state.answers[q.id];
-        const cards = q.options.map((o, i) => {
-          const active = q.multiple ? selected.includes(o[0]) : selected === o[0];
-          return `<button style="animation-delay:${i * 35}ms" onclick="choose('${q.id}','${o[0]}',${q.multiple ? "true" : "false"})" class="group flex w-full animate-fade-up items-center justify-between gap-4 rounded-3xl border p-5 text-left transition duration-300 ${active ? "border-[#111011] bg-[#111011] text-white shadow-[0_18px_44px_rgba(0,0,0,.18)]" : "border-black/10 bg-white hover:-translate-y-0.5 hover:border-black/25 hover:shadow-[0_16px_50px_rgba(0,0,0,.08)]"} ${q.multiple ? "min-h-[96px]" : "min-h-[112px]"}"><span><span class="block text-lg font-semibold tracking-normal">${o[1]}</span>${o[2] ? `<span class="mt-2 block text-sm leading-6 ${active ? "text-white/70" : "text-[#606266]"}">${o[2]}</span>` : ""}</span><span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${active ? "border-white/25 bg-white text-[#111011]" : "border-black/10 bg-[#f1f1f1] text-[#828487]"}">${active ? "✓" : "→"}</span></button>`;
-        }).join("");
-        return chrome(`<div class="mx-auto max-w-4xl animate-fade-up"><div class="mb-8"><div class="mb-3 flex items-center justify-between text-sm text-[#828487]"><span>Step ${state.step + 1} of ${questions.length}</span><span>${Object.keys(state.answers).length} answered</span></div><div class="h-2 overflow-hidden rounded-full bg-white/80"><div class="h-full rounded-full bg-[#111011] transition-all duration-500" style="width:${progress}%"></div></div></div><div class="rounded-[2rem] border border-white bg-white p-4 shadow-soft-xl sm:p-6"><div class="rounded-[1.5rem] border border-black/10 bg-[#fafafa] p-5 sm:p-8"><p class="text-sm font-semibold uppercase tracking-[.18em] text-[#828487]">${q.eyebrow}</p><h2 class="mt-3 max-w-3xl text-3xl font-semibold leading-tight tracking-normal text-[#111011] sm:text-5xl">${q.question}</h2>${q.multiple ? `<p class="mt-4 text-base text-[#606266]">Choose all that apply.</p>` : ""}<div class="mt-8 grid gap-3 ${q.multiple ? "sm:grid-cols-2" : ""}">${cards}</div><div class="mt-8 flex items-center justify-between gap-3"><button onclick="state.step=Math.max(-1,state.step-1);render()" class="inline-flex h-12 items-center justify-center rounded-full px-5 text-base font-medium text-[#606266] transition hover:bg-[#f1f1f1]">← Back</button>${q.multiple ? `<button onclick="state.step++;render()" ${selected.length ? "" : "disabled"} class="inline-flex h-12 items-center justify-center rounded-full bg-[#111011] px-5 text-base font-medium text-white transition disabled:opacity-40">See recommendation →</button>` : ""}</div></div></div></div>`);
-      }
-
-      function choose(qid, val, multi) {
-        if (multi) {
-          if (val === "recommend") state.answers[qid] = state.answers[qid]?.includes(val) ? [] : [val];
-          else {
-            const cur = (state.answers[qid] || []).filter(x => x !== "recommend");
-            state.answers[qid] = cur.includes(val) ? cur.filter(x => x !== val) : [...cur, val];
-          }
-        } else {
-          state.answers[qid] = val;
-          window.setTimeout(() => { state.step++; render(); }, 120);
-        }
-        render();
-      }
-
-      function renderRecommendation() {
-        const rec = getRecommendation();
-        const core = Object.values(packageConfig.packages).filter(p => p.category === "core");
-        const summary = questions.map(q => {
-          const v = state.answers[q.id];
-          const text = Array.isArray(v) ? v.map(x => label(q.id, x)).join(", ") : label(q.id, v);
-          return `<button onclick="state.step=${questions.indexOf(q)};render()" class="w-full rounded-2xl border border-black/10 bg-[#f7f7f7] p-4 text-left transition hover:border-black/25 hover:bg-white"><span class="block text-xs font-semibold uppercase tracking-[.14em] text-[#828487]">${q.eyebrow}</span><span class="mt-1 block text-sm leading-6 text-[#111011]">${text}</span></button>`;
-        }).join("");
-        return chrome(`<div class="mx-auto grid max-w-7xl gap-6 animate-fade-up lg:grid-cols-[minmax(0,1fr)_360px]"><div class="rounded-[2rem] border border-white bg-white p-4 shadow-soft-xl sm:p-6"><div class="rounded-[1.5rem] bg-[#111011] p-6 text-white sm:p-8 lg:p-10"><p class="text-sm font-semibold uppercase tracking-[.2em] text-[#d6dbdc]">Your Recommended Package</p><h2 class="mt-4 text-5xl font-semibold leading-none tracking-normal sm:text-6xl">${rec.package.name}</h2><p class="mt-4 max-w-2xl text-lg leading-8 text-white/70">${rec.reason}</p><div class="mt-8 grid gap-4 md:grid-cols-3"><div class="rounded-3xl border border-white/10 bg-white/[.06] p-5"><p class="text-xs font-semibold uppercase tracking-[.16em] text-white/45">Best for</p><p class="mt-3 text-lg font-semibold leading-7">${rec.package.bestFor}</p></div><div class="rounded-3xl border border-white bg-white p-5 text-[#111011]"><p class="text-xs font-semibold uppercase tracking-[.16em] text-[#606266]">Estimated price</p><p class="mt-3 text-lg font-semibold leading-7">${price(rec.estimated)}</p></div><div class="rounded-3xl border border-white/10 bg-white/[.06] p-5"><p class="text-xs font-semibold uppercase tracking-[.16em] text-white/45">Package type</p><p class="mt-3 text-lg font-semibold capitalize leading-7">${rec.package.category}</p></div></div>${rec.custom ? `<div class="mt-5 rounded-3xl border border-white/20 bg-white/[.07] p-5 text-[#d6dbdc]">Custom quote recommended for properties over 5,000 sq ft.</div>` : ""}<div class="mt-8 grid gap-6 lg:grid-cols-[1fr_.85fr]"><div class="rounded-3xl border border-white/10 bg-white/[.06] p-5"><h3 class="text-xl font-semibold">What's included</h3><div class="mt-5 grid gap-3 sm:grid-cols-2">${rec.package.includes.map(x => `<div class="flex items-start gap-3 text-sm leading-6 text-white/75"><span class="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[#111011]">✓</span>${x}</div>`).join("")}</div></div><div class="rounded-3xl border border-white/10 bg-white/[.06] p-5"><h3 class="text-xl font-semibold">Recommended add-ons</h3><div class="mt-5 space-y-3">${rec.addOns.length ? rec.addOns.map(a => `<div class="rounded-2xl bg-white/[.07] p-4"><div class="flex items-start justify-between gap-3"><div><p class="font-semibold">${a.name}</p><p class="mt-1 text-sm leading-6 text-white/60">${a.purpose}</p></div><span class="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111011]">$${a.startingPrice}+</span></div></div>`).join("") : `<p class="text-sm leading-6 text-white/65">No must-have add-ons based on your answers. This package should cover the core need.</p>`}</div></div></div><div class="mt-8 flex flex-col gap-3 sm:flex-row"><button class="inline-flex h-14 items-center justify-center rounded-full bg-white px-7 text-base font-medium text-[#111011]">Book this package</button><button class="inline-flex h-14 items-center justify-center rounded-full border border-white/20 bg-white/10 px-7 text-base font-medium text-white">Customize this package</button><button onclick="reset()" class="inline-flex h-14 items-center justify-center rounded-full px-7 text-base font-medium text-white/75">Start over</button></div></div></div><aside class="space-y-4"><div class="rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,.06)]"><h3 class="text-lg font-semibold">You told us</h3><div class="mt-4 space-y-3">${summary}</div></div><div class="rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,.06)]"><p class="font-semibold">Want us to choose for you?</p><p class="mt-2 text-sm leading-6 text-[#606266]">Send us the listing and we'll recommend the right package.</p><button class="mt-4 inline-flex h-12 w-full items-center justify-center rounded-full bg-[#111011] px-5 font-medium text-white">Send listing</button></div><details class="group rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,.06)]"><summary class="flex cursor-pointer list-none items-center justify-between font-semibold">Compare packages <span>⌄</span></summary><div class="mt-4 space-y-3">${core.map(p => `<div class="rounded-2xl border border-black/10 bg-[#f7f7f7] p-4"><div class="flex items-start justify-between gap-3"><div><p class="font-semibold">${p.name}</p><p class="mt-1 text-sm leading-6 text-[#606266]">${p.purpose}</p></div><span class="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold">$${p.startingPrice}+</span></div><p class="mt-3 text-xs leading-5 text-[#828487]">${p.includes.slice(0,4).join(" / ")}</p></div>`).join("")}</div></details><p class="px-1 text-xs leading-5 text-[#828487]">Pricing shown is an estimate. Final pricing may vary based on property size, location, scheduling, and custom production needs.</p></aside></div>`);
-      }
-
-      function render() {
-        if (state.step < 0) app.innerHTML = renderIntro();
-        else if (state.step >= questions.length) app.innerHTML = renderRecommendation();
-        else app.innerHTML = renderQuestion();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-
-      render();
-    </script>
+    <div id="root"></div>
   </body>
 </html>

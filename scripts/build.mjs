@@ -1,25 +1,7 @@
 import { build } from "esbuild";
 import { mkdir, writeFile } from "node:fs/promises";
 
-await mkdir("dist/assets", { recursive: true });
-
-await build({
-  entryPoints: ["src/main.tsx"],
-  bundle: true,
-  outfile: "dist/assets/index.js",
-  format: "esm",
-  jsx: "automatic",
-  minify: true,
-  sourcemap: false,
-  loader: {
-    ".ts": "ts",
-    ".tsx": "tsx",
-  },
-});
-
-await writeFile(
-  "dist/index.html",
-  `<!doctype html>
+const indexHtml = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -91,5 +73,24 @@ await writeFile(
     <div id="root"></div>
   </body>
 </html>
-`,
-);
+`;
+
+for (const outputDirectory of ["dist", "docs"]) {
+  await mkdir(`${outputDirectory}/assets`, { recursive: true });
+
+  await build({
+    entryPoints: ["src/main.tsx"],
+    bundle: true,
+    outfile: `${outputDirectory}/assets/index.js`,
+    format: "esm",
+    jsx: "automatic",
+    minify: true,
+    sourcemap: false,
+    loader: {
+      ".ts": "ts",
+      ".tsx": "tsx",
+    },
+  });
+
+  await writeFile(`${outputDirectory}/index.html`, indexHtml);
+}

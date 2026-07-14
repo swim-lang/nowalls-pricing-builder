@@ -15,16 +15,30 @@ import {
 } from "lucide-react";
 
 type QuestionId = "propertyType" | "goal" | "socialImportance" | "size" | "knownNeeds";
+type PriceSizeTier =
+  | "under_1000"
+  | "1001_2000"
+  | "2001_3000"
+  | "3001_4000"
+  | "4000_6000"
+  | "6001_8000"
+  | "over_8000";
+type SizeTier = PriceSizeTier | "not_sure";
 type PackageId =
   | "starter"
   | "essentials"
   | "signature"
   | "premier"
-  | "socialBoostLite"
-  | "socialBoostPro"
-  | "landLot"
-  | "exteriorPreview"
-  | "locationPreview"
+  | "casualScroller"
+  | "contentPro"
+  | "influencer"
+  | "airbnbHost"
+  | "airbnbHostPlus"
+  | "airbnbSuperHost"
+  | "airbnbSuperHostPlus"
+  | "landPackage"
+  | "lot"
+  | "locationPackage"
   | "preListing";
 
 type Option = {
@@ -46,9 +60,18 @@ type PackageConfig = {
   name: string;
   purpose: string;
   bestFor: string;
-  startingPrice: number;
-  category: "core" | "social" | "land" | "pre-listing";
+  category: "core" | "social" | "airbnb" | "land" | "pre-listing";
   includes: string[];
+  pricing?: Partial<Record<PriceSizeTier, { price: number; photos?: string }>>;
+  flatPrice?: number;
+};
+
+type AddOnConfig = {
+  id: string;
+  name: string;
+  purpose: string;
+  price: number;
+  priceSuffix?: string;
 };
 
 type Answers = Partial<Record<QuestionId, string | string[]>>;
@@ -56,10 +79,11 @@ type Answers = Partial<Record<QuestionId, string | string[]>>;
 type Recommendation = {
   package: PackageConfig;
   reason: string;
-  addOns: PackageConfig[];
-  sizeModifier: number | "custom_quote";
-  isCustomQuote: boolean;
-  estimatedPrice: number | "custom_quote";
+  addOns: AddOnConfig[];
+  estimatedPrice: number;
+  isStartingPrice: boolean;
+  photoCount?: string;
+  sizeLabel: string;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ");
@@ -74,131 +98,282 @@ const iconMap = {
   sparkles: Sparkles,
 };
 
+const PRICE_SIZE_TIERS: PriceSizeTier[] = [
+  "under_1000",
+  "1001_2000",
+  "2001_3000",
+  "3001_4000",
+  "4000_6000",
+  "6001_8000",
+  "over_8000",
+];
+
+const SIZE_LABELS: Record<SizeTier, string> = {
+  under_1000: "0-1,000 sq ft",
+  "1001_2000": "1,001-2,000 sq ft",
+  "2001_3000": "2,001-3,000 sq ft",
+  "3001_4000": "3,001-4,000 sq ft",
+  "4000_6000": "4,000-6,000 sq ft",
+  "6001_8000": "6,001-8,000 sq ft",
+  over_8000: "8,000+ sq ft",
+  not_sure: "Square footage not selected",
+};
+
+const tier = (price: number, photos: number) => ({ price, photos: `${photos} photos` });
+
 export const PACKAGE_CONFIG = {
-  squareFootageModifiers: {
-    under_1000: 0,
-    "1000_2000": 50,
-    "2000_3500": 100,
-    "3500_5000": 200,
-    over_5000: "custom_quote",
-    not_sure: 0,
-  },
   packages: {
     starter: {
       id: "starter",
       name: "Starter",
       purpose: "Simple listing, lower budget, essential photos.",
-      bestFor: "Simple listings that need clean MLS-ready media",
-      startingPrice: 195,
+      bestFor: "Smaller listings and quick-turn properties that still need polish",
       category: "core",
-      includes: ["Professional listing photos", "Basic delivery", "MLS-ready gallery"],
+      includes: ["Professional photos", "Agent-branded property website", "2D floor plan"],
+      pricing: {
+        under_1000: tier(195, 25),
+        "1001_2000": tier(229, 30),
+        "2001_3000": tier(265, 35),
+        "3001_4000": tier(300, 40),
+        "4000_6000": tier(335, 45),
+        "6001_8000": tier(370, 50),
+        over_8000: tier(405, 55),
+      },
     },
     essentials: {
       id: "essentials",
       name: "Essentials",
-      purpose: "Polished standard listing.",
-      bestFor: "Standard listings that need a professional presentation",
-      startingPrice: 395,
+      purpose: "The go-to package for agents who want to market with intention.",
+      bestFor: "Standard listings that need a polished, versatile launch",
       category: "core",
       includes: [
         "Professional photos",
-        "Drone photos",
-        "Floor plan",
-        "Property website or listing page",
-        "Basic marketing assets",
+        "Classic video walkthrough or classic vertical reel",
+        "Matterport or Zillow 3D",
+        "2D floor plan",
+        "Virtual twilight",
+        "Agent-branded property website + marketing kit",
       ],
+      pricing: {
+        under_1000: tier(460, 30),
+        "1001_2000": tier(495, 35),
+        "2001_3000": tier(530, 40),
+        "3001_4000": tier(565, 45),
+        "4000_6000": tier(600, 50),
+        "6001_8000": tier(635, 55),
+        over_8000: tier(670, 60),
+      },
     },
     signature: {
       id: "signature",
       name: "Signature",
-      purpose: "Strong listing presentation with more visual depth.",
-      bestFor: "Listings where speed, clarity, and visual depth matter",
-      startingPrice: 695,
+      purpose: "An immersive package designed to sell high-end homes faster and for more.",
+      bestFor: "Listings that need cinematic depth and a stronger launch",
       category: "core",
       includes: [
         "Professional photos",
-        "Drone photos",
-        "Video",
-        "Floor plan",
-        "Property website",
-        "Social-friendly assets",
+        "Luxe cinematic video or luxe cinematic reel",
+        "Zillow ShowingTime+ 3D tour or Matterport tour",
+        "Up to 10 aerial drone photos + video",
+        "2D floor plan",
         "Virtual twilight",
+        "Agent-branded property website + marketing kit",
       ],
+      pricing: {
+        under_1000: tier(714, 30),
+        "1001_2000": tier(749, 35),
+        "2001_3000": tier(784, 40),
+        "3001_4000": tier(819, 45),
+        "4000_6000": tier(854, 50),
+        "6001_8000": tier(889, 55),
+        over_8000: tier(924, 60),
+      },
     },
     premier: {
       id: "premier",
       name: "Premier",
-      purpose: "Premium or higher-value listings.",
-      bestFor: "Luxury, high-value, or story-driven properties",
-      startingPrice: 995,
+      purpose: "A complete package built to elevate a listing and boost buyer interest.",
+      bestFor: "Luxury, high-value, and story-driven properties",
       category: "core",
       includes: [
-        "Full photo package",
-        "Drone photos and video",
-        "Cinematic listing video",
-        "Floor plan",
-        "Property website",
-        "Twilight or virtual twilight",
-        "Social content kit",
-        "Neighborhood or lifestyle content",
+        "Professional photos",
+        "Luxe cinematic video",
+        "Luxe cinematic reel",
+        "Up to 10 aerial drone photos + video",
+        "Zillow ShowingTime+ 3D tour or Matterport tour",
+        "2D floor plan",
+        "Virtual twilight",
+        "Agent-branded property website + marketing kit",
       ],
+      pricing: {
+        under_1000: tier(990, 30),
+        "1001_2000": tier(1025, 35),
+        "2001_3000": tier(1060, 40),
+        "3001_4000": tier(1095, 45),
+        "4000_6000": tier(1130, 50),
+        "6001_8000": tier(1165, 55),
+        over_8000: tier(1200, 60),
+      },
     },
-    socialBoostLite: {
-      id: "socialBoostLite",
-      name: "Social Boost Lite",
-      purpose: "A few strong assets for agents who want usable social content.",
-      bestFor: "Agents who want simple social-ready listing content",
-      startingPrice: 395,
+    casualScroller: {
+      id: "casualScroller",
+      name: "The Casual Scroller",
+      purpose: "A social-ready package that gives a listing an easy content boost.",
+      bestFor: "Agents who want polished listing media and a classic reel",
       category: "social",
-      includes: ["1 reel", "Short-form clips", "Social-ready exports"],
+      includes: [
+        "Professional horizontal and vertical photos",
+        "Classic vertical reel",
+        "2D floor plan",
+        "Virtual twilight",
+        "Agent-branded property website + marketing kit",
+      ],
+      pricing: {
+        under_1000: tier(395, 30),
+        "1001_2000": tier(430, 35),
+        "2001_3000": tier(465, 40),
+        "3001_4000": tier(500, 45),
+        "4000_6000": tier(535, 50),
+        "6001_8000": tier(570, 55),
+        over_8000: tier(605, 60),
+      },
     },
-    socialBoostPro: {
-      id: "socialBoostPro",
-      name: "Social Boost Pro",
-      purpose: "For agents who want the listing to build their personal brand too.",
-      bestFor: "Agents treating social as part of the listing strategy",
-      startingPrice: 695,
+    contentPro: {
+      id: "contentPro",
+      name: "The Content Pro",
+      purpose: "A complete listing-and-content package with higher-production social assets.",
+      bestFor: "Agents who want the listing to consistently feed their content channels",
       category: "social",
-      includes: ["Multiple reels", "Vertical video edits", "Social captions or content prompts", "Agent-facing content kit"],
+      includes: [
+        "Professional horizontal and vertical photos",
+        "Luxe vertical reel with drone clips",
+        "Coming soon video",
+        "Up to 10 aerial photos + video",
+        "2D floor plan",
+        "Virtual twilight",
+        "Agent-branded property website + marketing kit",
+      ],
+      pricing: {
+        under_1000: tier(595, 30),
+        "1001_2000": tier(630, 35),
+        "2001_3000": tier(665, 40),
+        "3001_4000": tier(700, 45),
+        "4000_6000": tier(735, 50),
+        "6001_8000": tier(770, 55),
+        over_8000: tier(805, 60),
+      },
     },
-    landLot: {
-      id: "landLot",
-      name: "Land / Lot Package",
-      purpose: "Clear visual context for land, lots, and acreage.",
-      bestFor: "Land, lots, acreage, and location-driven listings",
-      startingPrice: 495,
+    influencer: {
+      id: "influencer",
+      name: "The Influencer",
+      purpose: "The full personal-brand package with agent and lifestyle scenes.",
+      bestFor: "Agents making personal brand growth a major part of the listing strategy",
+      category: "social",
+      includes: [
+        "Professional horizontal and vertical photos",
+        "Influencer vertical reel with agent/lifestyle scenes",
+        "Coming soon video",
+        "Up to 10 aerial photos + video",
+        "Zillow ShowingTime+ or Matterport 3D",
+        "2D floor plan",
+        "Virtual twilight",
+        "Agent-branded property website + marketing kit",
+      ],
+      pricing: {
+        under_1000: tier(695, 30),
+        "1001_2000": tier(730, 35),
+        "2001_3000": tier(765, 40),
+        "3001_4000": tier(800, 45),
+        "4000_6000": tier(835, 50),
+        "6001_8000": tier(870, 55),
+        over_8000: tier(905, 60),
+      },
+    },
+    airbnbHost: {
+      id: "airbnbHost",
+      name: "Host Package",
+      purpose: "Clean, detail-focused coverage for a short-term rental.",
+      bestFor: "Hosts who need a polished foundational photo set",
+      category: "airbnb",
+      includes: ["Up to 35 professional photos", "Detail photos of staged items and property features"],
+      flatPrice: 295,
+    },
+    airbnbHostPlus: {
+      id: "airbnbHostPlus",
+      name: "Host Package Plus",
+      purpose: "Expanded rental coverage with neighborhood context and light staging.",
+      bestFor: "Hosts who want the property and its location to feel fully considered",
+      category: "airbnb",
+      includes: ["Up to 40 professional photos", "Detail photos", "Neighborhood/lifestyle shots", "Drone photos", "Light staging"],
+      flatPrice: 395,
+    },
+    airbnbSuperHost: {
+      id: "airbnbSuperHost",
+      name: "Super Host Package",
+      purpose: "A richer short-term rental launch with social video.",
+      bestFor: "Established hosts who market beyond the booking platform",
+      category: "airbnb",
+      includes: ["Up to 50 professional photos", "Detail photos", "Neighborhood/lifestyle shots", "Drone photos", "Light staging", "Vertical social reel"],
+      flatPrice: 495,
+    },
+    airbnbSuperHostPlus: {
+      id: "airbnbSuperHostPlus",
+      name: "Super Host Package Plus",
+      purpose: "The complete short-term rental package with reel and 3D tour.",
+      bestFor: "Premium rentals that need maximum visual coverage",
+      category: "airbnb",
+      includes: ["Up to 50 professional photos", "Detail photos", "Neighborhood/lifestyle shots", "Drone photos", "Light staging", "Vertical social reel", "3D tour"],
+      flatPrice: 595,
+    },
+    landPackage: {
+      id: "landPackage",
+      name: "Land Package",
+      purpose: "Full visual context for land, lots, and acreage.",
+      bestFor: "Land listings where boundaries, access, and neighborhood context matter",
       category: "land",
-      includes: ["Land photography", "Drone photos", "Boundary graphics", "Neighborhood / access imagery", "Optional video"],
+      includes: ["Up to 20 ground photos", "10-15 drone photos with boundary graphics", "Neighborhood photos", "Drone video with boundary lines", "Neighborhood/lifestyle video clips"],
+      flatPrice: 499,
     },
-    exteriorPreview: {
-      id: "exteriorPreview",
-      name: "Exterior Preview",
-      purpose: "Quick pre-market exterior-only content.",
-      bestFor: "Early listing prep before the property is ready",
-      startingPrice: 89,
-      category: "pre-listing",
-      includes: ["Exterior photos only"],
+    lot: {
+      id: "lot",
+      name: "The Lot",
+      purpose: "A compact photo package for a straightforward lot listing.",
+      bestFor: "Lots that need clean ground and aerial coverage",
+      category: "land",
+      includes: ["Up to 10 exterior photos", "Up to 10 drone photos", "Agent-branded property website"],
+      flatPrice: 249,
     },
-    locationPreview: {
-      id: "locationPreview",
-      name: "Location Preview",
-      purpose: "A light coming-soon preview with location context.",
-      bestFor: "Teasing location and exterior appeal before launch",
-      startingPrice: 149,
-      category: "pre-listing",
-      includes: ["Exterior photos", "Neighborhood / location images"],
+    locationPackage: {
+      id: "locationPackage",
+      name: "Location Package",
+      purpose: "A land package that adds neighborhood and lifestyle context.",
+      bestFor: "Location-driven lots where the surrounding area helps sell the story",
+      category: "land",
+      includes: ["Up to 10 exterior photos", "Up to 10 drone photos", "Neighborhood/lifestyle photos", "Agent-branded property website"],
+      flatPrice: 349,
     },
     preListing: {
       id: "preListing",
       name: "Pre-Listing Package",
-      purpose: "Coming soon content with a stronger launch signal.",
-      bestFor: "Pre-listing campaigns and coming-soon announcements",
-      startingPrice: 349,
+      purpose: "Exterior photos and video clips before the property is ready to list.",
+      bestFor: "Capturing a property's exterior at its best before the full listing launch",
       category: "pre-listing",
-      includes: ["Exterior photos", "Drone photos", "Coming soon content", "Social teaser assets"],
+      includes: ["Exterior photos", "Exterior video clips"],
+      flatPrice: 129,
     },
   } satisfies Record<PackageId, PackageConfig>,
 };
+
+const ADD_ONS = {
+  classicVideo: { id: "classicVideo", name: "Classic Walkthrough Video", purpose: "Add a clean horizontal walkthrough video.", price: 249 },
+  classicReel: { id: "classicReel", name: "Classic Reel", purpose: "Add a social-ready vertical reel.", price: 189 },
+  contentSpecialist: { id: "contentSpecialist", name: "Content Specialist Reel", purpose: "Add a higher-production vertical reel with effects and drone clips.", price: 289 },
+  influencerReel: { id: "influencerReel", name: "Influencer Reel", purpose: "Add agent and lifestyle scenes to fully support the agent's brand.", price: 389 },
+  droneCombo: { id: "droneCombo", name: "Drone Photo + Video Combo", purpose: "Add aerial photo and edited aerial video coverage.", price: 199 },
+  twilightShoot: { id: "twilightShoot", name: "Twilight Shoot", purpose: "Add a dedicated twilight visit for a stronger hero image.", price: 159 },
+  virtualStaging: { id: "virtualStaging", name: "Virtual Staging", purpose: "Stage an empty room digitally.", price: 39, priceSuffix: " / image" },
+  agentScenes: { id: "agentScenes", name: "Agent Scenes", purpose: "Add agent-hosted scenes to the selected video.", price: 99 },
+} satisfies Record<string, AddOnConfig>;
 
 export const QUESTION_CONFIG: QuestionConfig[] = [
   {
@@ -209,6 +384,7 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
       { id: "standard", label: "Standard residential listing", hint: "A typical home, condo, or townhome." },
       { id: "luxury", label: "Luxury or high-value listing", hint: "A premium property where presentation carries more weight." },
       { id: "land", label: "Land, lot, or acreage", hint: "A property where boundaries, access, and context matter." },
+      { id: "short_term_rental", label: "Airbnb or short-term rental", hint: "A furnished rental where details and lifestyle coverage matter." },
       { id: "pre_listing", label: "Pre-listing / coming soon content", hint: "Early launch assets before the full listing push." },
       { id: "not_sure", label: "I'm not sure yet", hint: "No problem. We'll keep the recommendation flexible." },
     ],
@@ -242,11 +418,13 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
     eyebrow: "Size",
     question: "What is the approximate property size?",
     options: [
-      { id: "under_1000", label: "Under 1,000 sq ft", hint: "Compact property." },
-      { id: "1000_2000", label: "1,000 to 2,000 sq ft", hint: "Small to mid-size property." },
-      { id: "2000_3500", label: "2,000 to 3,500 sq ft", hint: "Mid-size listing." },
-      { id: "3500_5000", label: "3,500 to 5,000 sq ft", hint: "Larger property with more coverage needs." },
-      { id: "over_5000", label: "Over 5,000 sq ft", hint: "Custom quote recommended." },
+      { id: "under_1000", label: "0 to 1,000 sq ft", hint: "Compact property." },
+      { id: "1001_2000", label: "1,001 to 2,000 sq ft", hint: "Small to mid-size property." },
+      { id: "2001_3000", label: "2,001 to 3,000 sq ft", hint: "Mid-size listing." },
+      { id: "3001_4000", label: "3,001 to 4,000 sq ft", hint: "Larger property." },
+      { id: "4000_6000", label: "4,000 to 6,000 sq ft", hint: "Large property with more coverage needs." },
+      { id: "6001_8000", label: "6,001 to 8,000 sq ft", hint: "Estate-scale property." },
+      { id: "over_8000", label: "Over 8,000 sq ft", hint: "Maximum standard coverage tier." },
       { id: "not_sure", label: "Not sure", hint: "We'll keep the estimate flexible." },
     ],
   },
@@ -259,6 +437,7 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
       { id: "photos", label: "Photos" },
       { id: "video", label: "Video" },
       { id: "drone", label: "Drone" },
+      { id: "3d_tour", label: "Matterport or Zillow 3D" },
       { id: "floor_plan", label: "Floor plan" },
       { id: "website", label: "Website" },
       { id: "social_reels", label: "Social reels" },
@@ -274,11 +453,16 @@ const PACKAGE_ICONS: Record<PackageId, keyof typeof iconMap> = {
   essentials: "home",
   signature: "film",
   premier: "sparkles",
-  socialBoostLite: "film",
-  socialBoostPro: "sparkles",
-  landLot: "map",
-  exteriorPreview: "image",
-  locationPreview: "map",
+  casualScroller: "film",
+  contentPro: "film",
+  influencer: "sparkles",
+  airbnbHost: "home",
+  airbnbHostPlus: "home",
+  airbnbSuperHost: "sparkles",
+  airbnbSuperHostPlus: "sparkles",
+  landPackage: "map",
+  lot: "map",
+  locationPackage: "map",
   preListing: "layers",
 };
 
@@ -294,7 +478,44 @@ const answerLabel = (questionId: QuestionId, value: string) => {
   return question?.options.find((option) => option.id === value)?.label ?? value;
 };
 
-const formatPrice = (price: number | "custom_quote") => (price === "custom_quote" ? "Custom quote recommended" : `Starting at $${price.toLocaleString()}`);
+const formatPrice = (price: number, isStarting = false) => `${isStarting ? "Starting at " : ""}$${price.toLocaleString()}`;
+
+export function getPackagePricing(packageConfig: PackageConfig, size: SizeTier = "not_sure") {
+  if (packageConfig.flatPrice !== undefined) {
+    return { price: packageConfig.flatPrice, photos: undefined, isStarting: false };
+  }
+
+  const selectedTier = size === "not_sure" ? PRICE_SIZE_TIERS[0] : size;
+  const pricing = packageConfig.pricing?.[selectedTier] ?? packageConfig.pricing?.[PRICE_SIZE_TIERS[0]];
+  if (!pricing) throw new Error(`Missing pricing for ${packageConfig.name}`);
+  return { ...pricing, isStarting: size === "not_sure" };
+}
+
+const packageIncludesDrone = (packageId: PackageId) => [
+  "signature",
+  "premier",
+  "contentPro",
+  "influencer",
+  "airbnbHostPlus",
+  "airbnbSuperHost",
+  "airbnbSuperHostPlus",
+  "landPackage",
+].includes(packageId);
+
+const packageIncludesVideo = (packageId: PackageId) => [
+  "essentials",
+  "signature",
+  "premier",
+  "casualScroller",
+  "contentPro",
+  "influencer",
+  "airbnbSuperHost",
+  "airbnbSuperHostPlus",
+  "landPackage",
+  "preListing",
+].includes(packageId);
+
+const packageIncludesTwilight = (packageId: PackageId) => ["essentials", "signature", "premier", "casualScroller", "contentPro", "influencer"].includes(packageId);
 
 export function getRecommendation(answers: Answers): Recommendation {
   const propertyType = getSingleAnswer(answers, "propertyType");
@@ -308,8 +529,22 @@ export function getRecommendation(answers: Answers): Recommendation {
   let reason = "This gives you a polished listing presence without overbuilding the production.";
 
   if (propertyType === "land") {
-    packageId = "landLot";
+    packageId = goal === "essentials_only" ? "lot" : goal === "polished" ? "locationPackage" : "landPackage";
     reason = "Land listings benefit from drone context, boundary graphics, and access imagery more than a standard interior-first package.";
+  } else if (propertyType === "short_term_rental") {
+    if (goal === "premium" || goal === "custom" || socialImportance === "major") {
+      packageId = "airbnbSuperHostPlus";
+      reason = "This gives a premium rental the fullest photo, lifestyle, social, and 3D coverage.";
+    } else if (goal === "personal_brand" || socialImportance === "very") {
+      packageId = "airbnbSuperHost";
+      reason = "This adds social video and broader visual coverage to the short-term rental launch.";
+    } else if (goal === "polished" || goal === "sell_fast" || socialImportance === "somewhat") {
+      packageId = "airbnbHostPlus";
+      reason = "This adds neighborhood, drone, and styling context to a polished rental listing.";
+    } else {
+      packageId = "airbnbHost";
+      reason = "This keeps the rental coverage focused on strong photos and the details guests care about.";
+    }
   } else if (propertyType === "pre_listing") {
     packageId = "preListing";
     reason = "A pre-listing package gives you strong coming-soon assets without waiting for the full listing launch.";
@@ -321,7 +556,7 @@ export function getRecommendation(answers: Answers): Recommendation {
     reason = "You asked for the essentials, so this keeps the recommendation simple and budget-conscious.";
   } else if (goal === "polished") {
     packageId = "essentials";
-    reason = "This balances professional photos, drone, floor plan, and a simple web presence for a clean launch.";
+    reason = "This balances professional photos, video or 3D, floor plan, virtual twilight, and a polished web presence.";
   } else if (goal === "sell_fast") {
     packageId = "signature";
     reason = "A faster sale usually needs more visual depth, especially video, website, and social-friendly assets.";
@@ -329,13 +564,19 @@ export function getRecommendation(answers: Answers): Recommendation {
     packageId = "premier";
     reason = "This gives the listing a fuller, more elevated media story with room for custom production needs.";
   } else if (goal === "personal_brand") {
-    packageId = socialImportance === "major" ? "premier" : "signature";
-    reason = "You are marketing both the property and your brand, so the recommendation includes stronger video and social-ready output.";
+    packageId = socialImportance === "major" ? "influencer" : "contentPro";
+    reason = "You are marketing both the property and your brand, so the recommendation centers social-ready video and agent-facing content.";
   }
 
   const highIntentNeeds = ["video", "drone", "website", "social_reels"].filter((need) => needsSet.has(need));
-  if (propertyType !== "land" && propertyType !== "pre_listing") {
-    if (highIntentNeeds.length >= 4 || socialImportance === "major") {
+  if (!["land", "short_term_rental", "pre_listing", "luxury"].includes(propertyType || "")) {
+    if (socialImportance === "major") {
+      packageId = "influencer";
+      reason = "Social is a major part of your strategy, so this package adds agent and lifestyle scenes to the listing campaign.";
+    } else if (goal === "personal_brand" || socialImportance === "very") {
+      packageId = "contentPro";
+      reason = "Your answers call for a listing package that consistently creates higher-production social content.";
+    } else if (highIntentNeeds.length >= 4) {
       packageId = "premier";
       reason = "Your answers point to a more complete launch with video, drone, web, and social content working together.";
     } else if (highIntentNeeds.length >= 3 && packageId !== "premier") {
@@ -344,56 +585,37 @@ export function getRecommendation(answers: Answers): Recommendation {
     }
   }
 
-  const addOns: PackageConfig[] = [];
-  if (socialImportance === "very" || socialImportance === "major" || goal === "personal_brand" || needsSet.has("social_reels")) {
-    addOns.push(getPackage("socialBoostPro"));
-  } else if (socialImportance === "somewhat") {
-    addOns.push(getPackage("socialBoostLite"));
-  }
-
-  if (needsSet.has("twilight") && packageId !== "signature" && packageId !== "premier") {
-    addOns.push({
-      id: "signature",
-      name: "Twilight / Virtual Twilight Upgrade",
-      purpose: "Add a more emotional hero image to the listing launch.",
-      bestFor: "Listings that need a stronger first impression",
-      startingPrice: 150,
-      category: "core",
-      includes: ["Twilight or virtual twilight images"],
-    });
-  }
-
-  if (needsSet.has("neighborhood") && packageId !== "premier" && packageId !== "landLot") {
-    addOns.push({
-      id: "premier",
-      name: "Neighborhood Story Add-On",
-      purpose: "Add nearby lifestyle and location context.",
-      bestFor: "Listings where the area is part of the value",
-      startingPrice: 250,
-      category: "core",
-      includes: ["Neighborhood imagery", "Lifestyle details", "Location context"],
-    });
-  }
-
   const recommendedPackage = getPackage(packageId);
-  const rawSizeModifier = PACKAGE_CONFIG.squareFootageModifiers[(size ?? "not_sure") as keyof typeof PACKAGE_CONFIG.squareFootageModifiers];
-  const sizeModifier: number | "custom_quote" = rawSizeModifier === "custom_quote" ? "custom_quote" : Number(rawSizeModifier);
-  const isCustomQuote = sizeModifier === "custom_quote";
-  const estimatedPrice = isCustomQuote ? "custom_quote" : recommendedPackage.startingPrice + sizeModifier;
+  const addOns: AddOnConfig[] = [];
+  if (recommendedPackage.category !== "social" && needsSet.has("social_reels")) {
+    if (socialImportance === "major") addOns.push(ADD_ONS.influencerReel);
+    else if (socialImportance === "very") addOns.push(ADD_ONS.contentSpecialist);
+    else addOns.push(ADD_ONS.classicReel);
+  }
+
+  if (needsSet.has("video") && !packageIncludesVideo(packageId)) addOns.push(ADD_ONS.classicVideo);
+  if (needsSet.has("drone") && !packageIncludesDrone(packageId)) addOns.push(ADD_ONS.droneCombo);
+  if (needsSet.has("twilight") && !packageIncludesTwilight(packageId)) addOns.push(ADD_ONS.twilightShoot);
+  if (goal === "personal_brand" && recommendedPackage.category === "core") addOns.push(ADD_ONS.agentScenes);
+  if (goal === "custom" && !needsSet.has("twilight")) addOns.push(ADD_ONS.virtualStaging);
+
+  const selectedSize = (size ?? "not_sure") as SizeTier;
+  const packagePricing = getPackagePricing(recommendedPackage, selectedSize);
 
   return {
     package: recommendedPackage,
     reason,
-    addOns: dedupePackages(addOns, packageId),
-    sizeModifier,
-    isCustomQuote,
-    estimatedPrice,
+    addOns: dedupeAddOns(addOns),
+    estimatedPrice: packagePricing.price,
+    isStartingPrice: packagePricing.isStarting,
+    photoCount: packagePricing.photos,
+    sizeLabel: SIZE_LABELS[selectedSize],
   };
 }
 
-function dedupePackages(packages: PackageConfig[], recommendedId: PackageId) {
-  const seen = new Set<PackageId>([recommendedId]);
-  return packages.filter((item) => {
+function dedupeAddOns(addOns: AddOnConfig[]) {
+  const seen = new Set<string>();
+  return addOns.filter((item) => {
     if (seen.has(item.id)) return false;
     seen.add(item.id);
     return true;
@@ -479,7 +701,7 @@ function Header({ showStartOver, onStartOver }: { showStartOver: boolean; onStar
       <div className="flex min-w-0 items-center gap-4">
         <NoWallsLogo className="h-auto w-36 shrink-0 text-black sm:w-44" />
         <div className="hidden h-8 w-px bg-black/10 sm:block" />
-        <p className="hidden text-sm font-semibold uppercase tracking-[0.16em] text-[#828487] sm:block">Pricing Builder Demo</p>
+        <p className="hidden text-sm font-semibold uppercase tracking-[0.16em] text-[#828487] sm:block">Package Builder</p>
       </div>
       {showStartOver && (
         <Button variant="ghost" className="h-10 px-3 text-sm" onClick={onStartOver}>
@@ -554,8 +776,8 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
             ))}
           </div>
           <div className="mt-8 rounded-2xl bg-white p-5 text-[#111011]">
-            <p className="text-sm font-medium">Estimated starting price</p>
-            <p className="mt-1 text-3xl font-semibold">$695+</p>
+            <p className="text-sm font-medium">Starting package price</p>
+            <p className="mt-1 text-3xl font-semibold">$714</p>
           </div>
         </div>
       </div>
@@ -738,15 +960,9 @@ function RecommendationScreen({
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <InfoTile label="Best for" value={recommendation.package.bestFor} />
-            <InfoTile label="Estimated price" value={formatPrice(recommendation.estimatedPrice)} featured />
-            <InfoTile label="Package type" value={recommendation.package.category.replace("-", " ")} />
+            <InfoTile label="Package price" value={formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice)} featured />
+            <InfoTile label={recommendation.photoCount ? "Photo coverage" : "Property size"} value={recommendation.photoCount || recommendation.sizeLabel} />
           </div>
-
-          {recommendation.isCustomQuote && (
-            <div className="mt-5 rounded-3xl border border-white/20 bg-white/[0.07] p-5 text-[#d6dbdc]">
-              Custom quote recommended for properties over 5,000 sq ft.
-            </div>
-          )}
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.85fr]">
             <IncludedServices services={recommendation.package.includes} />
@@ -773,7 +989,7 @@ function RecommendationScreen({
         <ChooseForMeCard />
         <PackageComparison />
         <p className="px-1 text-xs leading-5 text-[#828487]">
-          Pricing shown is an estimate. Final pricing may vary based on property size, location, scheduling, and custom production needs.
+          Package pricing reflects the selected square-foot tier. Add-ons and custom production needs change the final total.
         </p>
       </aside>
     </div>
@@ -807,7 +1023,7 @@ function IncludedServices({ services }: { services: string[] }) {
   );
 }
 
-function RecommendedAddOns({ addOns }: { addOns: PackageConfig[] }) {
+function RecommendedAddOns({ addOns }: { addOns: AddOnConfig[] }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5">
       <h3 className="text-xl font-semibold tracking-normal">Recommended add-ons</h3>
@@ -820,7 +1036,9 @@ function RecommendedAddOns({ addOns }: { addOns: PackageConfig[] }) {
                   <p className="font-semibold">{addOn.name}</p>
                   <p className="mt-1 text-sm leading-6 text-white/60">{addOn.purpose}</p>
                 </div>
-                <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111011]">${addOn.startingPrice}+</span>
+                <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111011]">
+                  ${addOn.price.toLocaleString()}{addOn.priceSuffix || ""}
+                </span>
               </div>
             </div>
           ))
@@ -887,7 +1105,9 @@ function PackageComparison() {
                 <p className="font-semibold text-[#111011]">{item.name}</p>
                 <p className="mt-1 text-sm leading-6 text-[#606266]">{item.purpose}</p>
               </div>
-              <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111011]">${item.startingPrice}+</span>
+              <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111011]">
+                {formatPrice(getPackagePricing(item).price, true)}
+              </span>
             </div>
             <p className="mt-3 text-xs leading-5 text-[#828487]">{item.includes.slice(0, 4).join(" / ")}</p>
           </div>
