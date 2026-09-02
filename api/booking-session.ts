@@ -102,6 +102,7 @@ async function handleBookingSession(request: Request): Promise<Response> {
         status: error.status,
         validationFields: error.validationFields,
         responseKeys: error.responseKeys,
+        responsePaths: error.responsePaths,
       });
 
       return json(

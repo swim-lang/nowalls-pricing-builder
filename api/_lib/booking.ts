@@ -57,13 +57,21 @@ export class AryeoApiError extends Error {
   readonly status: number;
   readonly validationFields: string[];
   readonly responseKeys: string[];
+  readonly responsePaths: string[];
 
-  constructor(status: number, message: string, validationFields: string[] = [], responseKeys: string[] = []) {
+  constructor(
+    status: number,
+    message: string,
+    validationFields: string[] = [],
+    responseKeys: string[] = [],
+    responsePaths: string[] = [],
+  ) {
     super(message);
     this.name = "AryeoApiError";
     this.status = status;
     this.validationFields = validationFields;
     this.responseKeys = responseKeys;
+    this.responsePaths = responsePaths;
   }
 }
 
@@ -80,10 +88,28 @@ function getSafeDiagnosticKeys(value: unknown): string[] {
     .slice(0, 20);
 }
 
+function getSafeDiagnosticPaths(value: unknown, prefix = "", depth = 0): string[] {
+  if (depth > 3) return [];
+
+  if (Array.isArray(value)) {
+    return value.slice(0, 3).flatMap((item) => getSafeDiagnosticPaths(item, prefix, depth + 1)).slice(0, 40);
+  }
+  if (!isRecord(value)) return [];
+
+  const paths = Object.entries(value).flatMap(([key, nestedValue]) => {
+    if (!SAFE_DIAGNOSTIC_KEY_PATTERN.test(key)) return [];
+    const path = prefix ? `${prefix}.${key}` : key;
+    return [path, ...getSafeDiagnosticPaths(nestedValue, path, depth + 1)];
+  });
+
+  return [...new Set(paths)].slice(0, 40);
+}
+
 function getAryeoValidationFields(value: unknown): string[] {
   if (!isRecord(value)) return [];
 
-  const errors = value.errors;
+  const data = isRecord(value.data) ? value.data : {};
+  const errors = value.errors ?? data.errors;
   if (isRecord(errors)) return getSafeDiagnosticKeys(errors);
   if (!Array.isArray(errors)) return [];
 
@@ -235,6 +261,7 @@ export async function createAryeoOrderFormSession(
       `Aryeo rejected the session request with status ${response.status}.`,
       getAryeoValidationFields(responseBody),
       getSafeDiagnosticKeys(responseBody),
+      getSafeDiagnosticPaths(responseBody),
     );
   }
 

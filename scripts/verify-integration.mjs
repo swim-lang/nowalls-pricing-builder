@@ -110,7 +110,40 @@ try {
       assert.equal(error.status, 422);
       assert.deepEqual(error.validationFields, ["order_form_id", "customer_data.email"]);
       assert.deepEqual(error.responseKeys, ["status", "message", "errors"]);
+      assert.deepEqual(error.responsePaths, [
+        "status",
+        "message",
+        "errors",
+        "errors.order_form_id",
+        "errors.customer_data.email",
+      ]);
       assert.equal(error.message.includes("sensitive"), false);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    () => createAryeoOrderFormSession("unit-test-token", payload, async () => Response.json(
+      {
+        status: "fail",
+        timestamp: "2026-09-02T00:00:00Z",
+        data: {
+          errors: {
+            "address_data.street_name": ["A sensitive upstream validation message."],
+          },
+        },
+      },
+      { status: 422 },
+    )),
+    (error) => {
+      assert.deepEqual(error.validationFields, ["address_data.street_name"]);
+      assert.deepEqual(error.responsePaths, [
+        "status",
+        "timestamp",
+        "data",
+        "data.errors",
+        "data.errors.address_data.street_name",
+      ]);
       return true;
     },
   );
