@@ -98,7 +98,11 @@ async function handleBookingSession(request: Request): Promise<Response> {
     }
 
     if (error instanceof AryeoApiError) {
-      console.error("Aryeo session request rejected", error.status);
+      console.error("Aryeo session request rejected", {
+        status: error.status,
+        validationFields: error.validationFields,
+        responseKeys: error.responseKeys,
+      });
 
       return json(
         {

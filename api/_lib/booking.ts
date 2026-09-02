@@ -55,17 +55,51 @@ export class BookingValidationError extends Error {
 
 export class AryeoApiError extends Error {
   readonly status: number;
+  readonly validationFields: string[];
+  readonly responseKeys: string[];
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, validationFields: string[] = [], responseKeys: string[] = []) {
     super(message);
     this.name = "AryeoApiError";
     this.status = status;
+    this.validationFields = validationFields;
+    this.responseKeys = responseKeys;
   }
 }
 
 const isRecord = (value: unknown): value is UnknownRecord => typeof value === "object" && value !== null && !Array.isArray(value);
 
 const cleanString = (value: unknown, maxLength: number) => (typeof value === "string" ? value.trim().slice(0, maxLength) : "");
+
+const SAFE_DIAGNOSTIC_KEY_PATTERN = /^[a-z][a-z0-9_.\[\]-]{0,99}$/i;
+
+function getSafeDiagnosticKeys(value: unknown): string[] {
+  if (!isRecord(value)) return [];
+  return Object.keys(value)
+    .filter((key) => SAFE_DIAGNOSTIC_KEY_PATTERN.test(key))
+    .slice(0, 20);
+}
+
+function getAryeoValidationFields(value: unknown): string[] {
+  if (!isRecord(value)) return [];
+
+  const errors = value.errors;
+  if (isRecord(errors)) return getSafeDiagnosticKeys(errors);
+  if (!Array.isArray(errors)) return [];
+
+  const fields = errors.flatMap((item) => {
+    if (!isRecord(item)) return [];
+
+    const directField = typeof item.field === "string" ? item.field : typeof item.parameter === "string" ? item.parameter : "";
+    const source = isRecord(item.source) ? item.source : {};
+    const sourceField = typeof source.parameter === "string" ? source.parameter : typeof source.pointer === "string" ? source.pointer : "";
+    const field = directField || sourceField.replace(/^\/data\/attributes\//, "").replaceAll("/", ".");
+
+    return SAFE_DIAGNOSTIC_KEY_PATTERN.test(field) ? [field] : [];
+  });
+
+  return [...new Set(fields)].slice(0, 20);
+}
 
 export function validateBookingRequest(input: unknown): ValidatedBookingRequest {
   const body = isRecord(input) ? input : {};
@@ -196,7 +230,12 @@ export async function createAryeoOrderFormSession(
   }
 
   if (!response.ok) {
-    throw new AryeoApiError(response.status, `Aryeo rejected the session request with status ${response.status}.`);
+    throw new AryeoApiError(
+      response.status,
+      `Aryeo rejected the session request with status ${response.status}.`,
+      getAryeoValidationFields(responseBody),
+      getSafeDiagnosticKeys(responseBody),
+    );
   }
 
   const data = isRecord(responseBody) && isRecord(responseBody.data) ? responseBody.data : null;
