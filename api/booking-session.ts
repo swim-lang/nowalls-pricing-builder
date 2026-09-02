@@ -5,6 +5,7 @@ import {
   buildAryeoSessionPayload,
   buildDirectHandoff,
   createAryeoOrderFormSession,
+  geocodeBookingAddress,
   validateBookingRequest,
 } from "./_lib/booking.js";
 
@@ -69,13 +70,23 @@ async function handleBookingSession(request: Request): Promise<Response> {
       );
     }
 
-    const payload = buildAryeoSessionPayload(validated, orderFormId, process.env.ARYEO_SUCCESS_URL?.trim() || undefined);
+    const coordinates = await geocodeBookingAddress(validated.address);
+    const payload = buildAryeoSessionPayload(
+      validated,
+      orderFormId,
+      coordinates,
+      process.env.ARYEO_SUCCESS_URL?.trim() || undefined,
+    );
     const bookingUrl = await createAryeoOrderFormSession(apiKey, payload);
 
     return json({
       bookingUrl,
       carriesCustomerDetails: true,
+      carriesAddressDetails: Boolean(coordinates),
       mode: "aryeo-session",
+      ...(!coordinates
+        ? { notice: "Your contact details are prefilled. Please confirm the property address in Aryeo." }
+        : {}),
       selection: {
         packageName: validated.packageConfig.name,
         variantLabel: validated.variant.label,

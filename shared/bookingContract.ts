@@ -34,6 +34,7 @@ export type BookingSessionMode = "aryeo-session" | "direct-order-form" | "fallba
 export type BookingSessionResult = {
   bookingUrl: string;
   carriesCustomerDetails: boolean;
+  carriesAddressDetails: boolean;
   mode: BookingSessionMode;
   notice?: string;
   selection: {

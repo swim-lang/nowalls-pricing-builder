@@ -786,8 +786,10 @@ function BookingRequestForm({ recommendation }: { recommendation: Recommendation
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/45">Ready for Aryeo</p>
             <h3 className="mt-2 text-2xl font-semibold tracking-normal">Finish the live booking</h3>
             <p className="mt-3 text-sm leading-6 text-white/68">
-              {result.carriesCustomerDetails
+              {result.carriesCustomerDetails && result.carriesAddressDetails
                 ? "Your contact and property details are prefilled. Aryeo will ask you to review them, choose the service below, schedule, accept the terms, and confirm."
+                : result.carriesCustomerDetails
+                  ? result.notice || "Your contact details are prefilled. Confirm the property address in Aryeo, then choose the service below, schedule, accept the terms, and confirm."
                 : result.notice || "Continue in Aryeo to enter the property details, schedule, accept the terms, and confirm."}
             </p>
             <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">

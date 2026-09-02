@@ -6,9 +6,11 @@ A custom recommendation experience backed by the production No Walls Aryeo order
 
 - Package names, prices, photo counts, and variant choices mirror the production `NW Order Now` catalog reviewed on September 2, 2026.
 - The browser posts customer, structured address, and package-choice data to `/api/booking-session`.
+- The Vercel Function geocodes U.S. addresses through the public U.S. Census Geocoder because Aryeo requires coordinates for address-prefilled sessions.
 - The Vercel Function keeps the Aryeo API key server-side and creates an Aryeo order-form session.
 - The customer finishes product selection, add-ons, scheduling, terms acceptance, and confirmation in Aryeo.
 - If the function is disabled or unavailable, the UI still provides a direct link to the live No Walls order form.
+- If an address cannot be geocoded, the session still carries the customer's contact details and Aryeo asks them to confirm the property address.
 
 Aryeo's order-form-session API does not accept a preselected product. The result screen therefore tells the customer exactly which package and variant to select after the handoff. Do not replace this with a direct Orders API write until the complete scheduling and terms flow has been proven in a non-production workspace.
 

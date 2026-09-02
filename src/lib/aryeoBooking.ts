@@ -26,6 +26,7 @@ const fallbackResult = (request: BookingSessionRequest, notice = FALLBACK_NOTICE
   return {
     bookingUrl: ARYEO_ORDER_FORM_URL,
     carriesCustomerDetails: false,
+    carriesAddressDetails: false,
     mode: "fallback",
     notice,
     selection: {

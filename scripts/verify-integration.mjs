@@ -46,6 +46,7 @@ try {
     BookingValidationError,
     buildAryeoSessionPayload,
     createAryeoOrderFormSession,
+    geocodeBookingAddress,
     validateBookingRequest,
   } = await import(pathToFileURL(serverBundlePath).href);
 
@@ -59,6 +60,7 @@ try {
   const payload = buildAryeoSessionPayload(
     validated,
     "019cabc9-1539-7102-892e-6368f97d965b",
+    { latitude: 39.7527, longitude: -104.9992 },
     "https://example.com/booking-complete",
   );
   assert.deepEqual(payload.customer_data, {
@@ -68,8 +70,8 @@ try {
     phone: "(720) 555-0100",
   });
   assert.deepEqual(payload.address_data, {
-    latitude: null,
-    longitude: null,
+    latitude: 39.7527,
+    longitude: -104.9992,
     street_number: "123",
     street_name: "Main Street",
     unit_number: "Suite 2",
@@ -80,6 +82,29 @@ try {
   });
   assert.deepEqual(payload.step_visibility, { show_address_step: true, show_customer_step: true });
   assert.equal("selection" in payload, false, "Unsupported product selection must not be sent to Aryeo sessions");
+
+  const payloadWithoutCoordinates = buildAryeoSessionPayload(
+    validated,
+    "019cabc9-1539-7102-892e-6368f97d965b",
+    null,
+  );
+  assert.equal("address_data" in payloadWithoutCoordinates, false);
+
+  let geocoderRequest;
+  const coordinates = await geocodeBookingAddress(validated.address, async (url, init) => {
+    geocoderRequest = { url: new URL(url), init };
+    return Response.json({
+      result: {
+        addressMatches: [{ coordinates: { x: -104.9992, y: 39.7527 } }],
+      },
+    });
+  });
+  assert.deepEqual(coordinates, { latitude: 39.7527, longitude: -104.9992 });
+  assert.equal(geocoderRequest.url.origin, "https://geocoding.geo.census.gov");
+  assert.equal(geocoderRequest.url.searchParams.get("street"), "123 Main Street");
+  assert.equal(geocoderRequest.url.searchParams.get("benchmark"), "Public_AR_Current");
+  assert.equal(geocoderRequest.init.headers.Authorization, undefined);
+  assert.equal(await geocodeBookingAddress(validated.address, async () => Response.json({ result: { addressMatches: [] } })), null);
 
   let capturedRequest;
   const mockFetch = async (url, init) => {
@@ -177,7 +202,7 @@ try {
     (error) => Boolean(error instanceof BookingValidationError && error.fields.email),
   );
   assert.throws(
-    () => buildAryeoSessionPayload(validated, "not-a-uuid"),
+    () => buildAryeoSessionPayload(validated, "not-a-uuid", null),
     /valid UUID/,
   );
 
@@ -225,6 +250,7 @@ try {
   const clientBundle = await readFile(clientBundlePath, "utf8");
   assert.equal(clientBundle.includes("ARYEO_API_KEY"), false, "The server credential name leaked into the browser bundle");
   assert.equal(clientBundle.includes("api.aryeo.com/v1"), false, "The private Aryeo API target leaked into the browser bundle");
+  assert.equal(clientBundle.includes("geocoding.geo.census.gov"), false, "The server-side geocoder target leaked into the browser bundle");
 
   console.log("Aryeo request validation, payload mapping, API call, and browser secret boundary verified.");
 } finally {

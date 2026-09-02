@@ -9,6 +9,7 @@ import {
 import type { BookingSessionRequest } from "../../shared/bookingContract.js";
 
 const ARYEO_API_BASE_URL = "https://api.aryeo.com/v1";
+const CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/address";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -21,9 +22,9 @@ export type ValidatedBookingRequest = BookingSessionRequest & {
 
 export type AryeoSessionPayload = {
   order_form_id: string;
-  address_data: {
-    latitude: number | null;
-    longitude: number | null;
+  address_data?: {
+    latitude: number;
+    longitude: number;
     street_number: string;
     street_name: string;
     unit_number?: string;
@@ -43,6 +44,11 @@ export type AryeoSessionPayload = {
     show_customer_step: true;
   };
   success_url?: string;
+};
+
+export type AddressCoordinates = {
+  latitude: number;
+  longitude: number;
 };
 
 export class BookingValidationError extends Error {
@@ -192,23 +198,27 @@ export function validateBookingRequest(input: unknown): ValidatedBookingRequest 
 export function buildAryeoSessionPayload(
   request: ValidatedBookingRequest,
   orderFormId: string,
+  coordinates: AddressCoordinates | null,
   successUrl?: string,
 ): AryeoSessionPayload {
   if (!UUID_PATTERN.test(orderFormId)) throw new Error("ARYEO_ORDER_FORM_ID must be a valid UUID.");
 
   const payload: AryeoSessionPayload = {
     order_form_id: orderFormId,
-    address_data: {
-      latitude: null,
-      longitude: null,
-      street_number: request.address.streetNumber,
-      street_name: request.address.streetName,
-      ...(request.address.unitNumber ? { unit_number: request.address.unitNumber } : {}),
-      postal_code: request.address.postalCode,
-      city: request.address.city,
-      state_or_province: request.address.stateOrProvince,
-      country: request.address.country || "US",
-    },
+    ...(coordinates
+      ? {
+          address_data: {
+            ...coordinates,
+            street_number: request.address.streetNumber,
+            street_name: request.address.streetName,
+            ...(request.address.unitNumber ? { unit_number: request.address.unitNumber } : {}),
+            postal_code: request.address.postalCode,
+            city: request.address.city,
+            state_or_province: request.address.stateOrProvince,
+            country: request.address.country || "US",
+          },
+        }
+      : {}),
     customer_data: {
       email: request.customer.email,
       first_name: request.customer.firstName,
@@ -233,6 +243,59 @@ export function buildAryeoSessionPayload(
 }
 
 type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+
+export async function geocodeBookingAddress(
+  address: ValidatedBookingRequest["address"],
+  fetchImpl: FetchLike = fetch,
+): Promise<AddressCoordinates | null> {
+  if ((address.country || "US") !== "US") return null;
+
+  const url = new URL(CENSUS_GEOCODER_URL);
+  url.search = new URLSearchParams({
+    street: `${address.streetNumber} ${address.streetName}`,
+    city: address.city,
+    state: address.stateOrProvince,
+    zip: address.postalCode,
+    benchmark: "Public_AR_Current",
+    format: "json",
+  }).toString();
+
+  try {
+    const response = await fetchImpl(url, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "NoWallsPricingPrototype/0.1",
+      },
+      signal: AbortSignal.timeout(4_000),
+    });
+    if (!response.ok) return null;
+
+    const responseBody: unknown = await response.json();
+    const result = isRecord(responseBody) && isRecord(responseBody.result) ? responseBody.result : null;
+    const matches = result && Array.isArray(result.addressMatches) ? result.addressMatches : [];
+    const firstMatch = isRecord(matches[0]) ? matches[0] : null;
+    const coordinates = firstMatch && isRecord(firstMatch.coordinates) ? firstMatch.coordinates : null;
+    const longitude = coordinates?.x;
+    const latitude = coordinates?.y;
+
+    if (
+      typeof latitude !== "number"
+      || !Number.isFinite(latitude)
+      || latitude < -90
+      || latitude > 90
+      || typeof longitude !== "number"
+      || !Number.isFinite(longitude)
+      || longitude < -180
+      || longitude > 180
+    ) {
+      return null;
+    }
+
+    return { latitude, longitude };
+  } catch {
+    return null;
+  }
+}
 
 export async function createAryeoOrderFormSession(
   apiKey: string,
@@ -293,6 +356,7 @@ export function buildDirectHandoff(request: ValidatedBookingRequest) {
   return {
     bookingUrl: ARYEO_ORDER_FORM_URL,
     carriesCustomerDetails: false,
+    carriesAddressDetails: false,
     mode: "direct-order-form" as const,
     notice: "Your package recommendation is ready, but your contact and address details will need to be entered again in Aryeo.",
     selection: {
