@@ -107,6 +107,11 @@ async function handleBookingSession(request: Request): Promise<Response> {
       );
     }
 
+    console.error(
+      "Unexpected booking-session failure",
+      error instanceof Error ? `${error.name}: ${error.message}` : "Unknown non-error value",
+    );
+
     return json(
       {
         error: { code: "BOOKING_SESSION_FAILED", message: "The booking session could not be prepared." },
