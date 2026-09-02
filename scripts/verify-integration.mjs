@@ -68,6 +68,8 @@ try {
     phone: "(720) 555-0100",
   });
   assert.deepEqual(payload.address_data, {
+    latitude: null,
+    longitude: null,
     street_number: "123",
     street_name: "Main Street",
     unit_number: "Suite 2",
@@ -144,6 +146,24 @@ try {
         "data.errors",
         "data.errors.address_data.street_name",
       ]);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    () => createAryeoOrderFormSession("unit-test-token", payload, async () => Response.json(
+      {
+        status: "fail",
+        timestamp: "2026-09-02T00:00:00Z",
+        data: {
+          "address_data.latitude": ["A sensitive upstream validation message."],
+          "address_data.longitude": ["A sensitive upstream validation message."],
+        },
+      },
+      { status: 422 },
+    )),
+    (error) => {
+      assert.deepEqual(error.validationFields, ["address_data.latitude", "address_data.longitude"]);
       return true;
     },
   );

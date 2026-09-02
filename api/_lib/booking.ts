@@ -22,6 +22,8 @@ export type ValidatedBookingRequest = BookingSessionRequest & {
 export type AryeoSessionPayload = {
   order_form_id: string;
   address_data: {
+    latitude: number | null;
+    longitude: number | null;
     street_number: string;
     street_name: string;
     unit_number?: string;
@@ -111,6 +113,7 @@ function getAryeoValidationFields(value: unknown): string[] {
   const data = isRecord(value.data) ? value.data : {};
   const errors = value.errors ?? data.errors;
   if (isRecord(errors)) return getSafeDiagnosticKeys(errors);
+  if (errors === undefined) return getSafeDiagnosticKeys(data);
   if (!Array.isArray(errors)) return [];
 
   const fields = errors.flatMap((item) => {
@@ -196,6 +199,8 @@ export function buildAryeoSessionPayload(
   const payload: AryeoSessionPayload = {
     order_form_id: orderFormId,
     address_data: {
+      latitude: null,
+      longitude: null,
       street_number: request.address.streetNumber,
       street_name: request.address.streetName,
       ...(request.address.unitNumber ? { unit_number: request.address.unitNumber } : {}),
