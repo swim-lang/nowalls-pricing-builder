@@ -109,7 +109,7 @@ async function handleBookingSession(request: Request): Promise<Response> {
 
     console.error(
       "Unexpected booking-session failure",
-      error instanceof Error ? `${error.name}: ${error.message}` : "Unknown non-error value",
+      error instanceof Error ? error.name : "Unknown non-error value",
     );
 
     return json(

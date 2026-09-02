@@ -87,7 +87,7 @@ try {
       { status: 201 },
     );
   };
-  const sessionUrl = await createAryeoOrderFormSession("unit-test-token", payload, mockFetch);
+  const sessionUrl = await createAryeoOrderFormSession(" unit-test-\n token ", payload, mockFetch);
   assert.equal(sessionUrl, "https://nowalls.aryeo.com/order-form-sessions/00000000-0000-4000-8000-000000000001");
   assert.equal(capturedRequest.url, "https://api.aryeo.com/v1/order-form-sessions");
   assert.equal(capturedRequest.init.method, "POST");

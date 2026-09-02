@@ -174,11 +174,14 @@ export async function createAryeoOrderFormSession(
   payload: AryeoSessionPayload,
   fetchImpl: FetchLike = fetch,
 ): Promise<string> {
+  const normalizedApiKey = apiKey.replace(/\s+/g, "");
+  if (!normalizedApiKey) throw new Error("ARYEO_API_KEY is empty after normalization.");
+
   const response = await fetchImpl(`${ARYEO_API_BASE_URL}/order-form-sessions`, {
     method: "POST",
     headers: {
       Accept: "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${normalizedApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
