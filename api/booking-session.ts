@@ -1,4 +1,4 @@
-import { ARYEO_ORDER_FORM_ID, ARYEO_ORDER_FORM_URL } from "../shared/aryeoCatalog";
+import { ARYEO_ORDER_FORM_ID, ARYEO_ORDER_FORM_URL } from "../shared/aryeoCatalog.js";
 import {
   AryeoApiError,
   BookingValidationError,
@@ -6,7 +6,7 @@ import {
   buildDirectHandoff,
   createAryeoOrderFormSession,
   validateBookingRequest,
-} from "./_lib/booking";
+} from "./_lib/booking.js";
 
 const responseHeaders = {
   "Cache-Control": "no-store",

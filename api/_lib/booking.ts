@@ -5,8 +5,8 @@ import {
   isPackageId,
   type CatalogVariant,
   type PackageConfig,
-} from "../../shared/aryeoCatalog";
-import type { BookingSessionRequest } from "../../shared/bookingContract";
+} from "../../shared/aryeoCatalog.js";
+import type { BookingSessionRequest } from "../../shared/bookingContract.js";
 
 const ARYEO_API_BASE_URL = "https://api.aryeo.com/v1";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
