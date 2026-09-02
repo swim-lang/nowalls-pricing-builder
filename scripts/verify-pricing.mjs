@@ -18,99 +18,103 @@ try {
     logLevel: "silent",
   });
 
-  const { buildBookingMailto, getRecommendation, PACKAGE_CONFIG } = await import(pathToFileURL(bundlePath).href);
+  const { getRecommendation, PACKAGE_CONFIG } = await import(pathToFileURL(bundlePath).href);
 
-  const matrixExpectations = {
-    starter: [195, 229, 265, 300, 335, 370, 405],
-    essentials: [460, 495, 530, 565, 600, 635, 670],
-    signature: [714, 749, 784, 819, 854, 889, 924],
-    premier: [990, 1025, 1060, 1095, 1130, 1165, 1200],
-    casualScroller: [395, 430, 465, 500, 535, 570, 605],
-    contentPro: [595, 630, 665, 700, 735, 770, 805],
-    influencer: [695, 730, 765, 800, 835, 870, 905],
+  const packageExpectations = {
+    starter: { price: 209, variants: 1 },
+    essentials: { price: 495, variants: 4 },
+    signature: { price: 749, variants: 4 },
+    premier: { price: 1195, variants: 2 },
+    casualScroller: { price: 395, variants: 1 },
+    contentPro: { price: 595, variants: 1 },
+    influencer: { price: 695, variants: 1 },
+    landPackage: { price: 495, variants: 1 },
+    lot: { price: 179, variants: 1 },
+    locationPackage: { price: 249, variants: 1 },
+    preListing: { price: 349, variants: 1 },
+    exteriorPhotos: { price: 89, variants: 1 },
   };
 
-  for (const [packageId, prices] of Object.entries(matrixExpectations)) {
-    const actual = Object.values(PACKAGE_CONFIG.packages[packageId].pricing).map((entry) => entry.price);
-    assert.deepEqual(actual, prices, `${packageId} price matrix changed`);
+  assert.deepEqual(Object.keys(PACKAGE_CONFIG.packages).sort(), Object.keys(packageExpectations).sort());
+
+  for (const [packageId, expected] of Object.entries(packageExpectations)) {
+    const packageConfig = PACKAGE_CONFIG.packages[packageId];
+    assert.equal(packageConfig.variants[0].price, expected.price, `${packageId} price changed`);
+    assert.equal(packageConfig.variants.length, expected.variants, `${packageId} variant count changed`);
+    assert.ok(packageConfig.variants.every((variant) => variant.price === expected.price), `${packageId} variants must share the reviewed live price`);
   }
 
   const expectRecommendation = (answers, expectedPackage, expectedPrice, expectedPhotos) => {
     const result = getRecommendation(answers);
     assert.equal(result.package.id, expectedPackage);
     assert.equal(result.estimatedPrice, expectedPrice);
+    assert.equal(result.isStartingPrice, false);
     if (expectedPhotos) assert.equal(result.photoCount, expectedPhotos);
   };
 
   expectRecommendation(
     { propertyType: "standard", goal: "essentials_only", socialImportance: "not_important", size: "1001_2000", knownNeeds: ["photos"] },
     "starter",
-    229,
-    "30 photos",
+    209,
+    "Up to 25 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "polished", socialImportance: "not_important", size: "2001_3000", knownNeeds: ["photos", "floor_plan"] },
     "essentials",
-    530,
-    "40 photos",
+    495,
+    "Up to 35 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "sell_fast", socialImportance: "not_important", size: "6001_8000", knownNeeds: ["video", "drone", "website"] },
     "signature",
-    889,
-    "55 photos",
+    749,
+    "Up to 40 photos",
   );
 
   expectRecommendation(
     { propertyType: "luxury", goal: "premium", socialImportance: "major", size: "over_8000", knownNeeds: ["video", "drone", "website", "social_reels"] },
     "premier",
-    1200,
-    "60 photos",
+    1195,
+    "Up to 45 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "personal_brand", socialImportance: "major", size: "3001_4000", knownNeeds: ["social_reels"] },
     "influencer",
-    800,
-    "45 photos",
+    695,
+    "Up to 40 photos",
   );
 
   expectRecommendation(
     { propertyType: "short_term_rental", goal: "premium", socialImportance: "very", size: "4000_6000", knownNeeds: ["photos", "video"] },
-    "airbnbSuperHostPlus",
+    "contentPro",
     595,
+    "Up to 35 photos",
   );
 
   expectRecommendation(
     { propertyType: "land", goal: "essentials_only", socialImportance: "not_important", size: "not_sure", knownNeeds: ["photos", "drone"] },
     "lot",
-    249,
+    179,
+    "Up to 20 photos",
+  );
+
+  expectRecommendation(
+    { propertyType: "pre_listing", goal: "essentials_only", socialImportance: "not_important", size: "not_sure", knownNeeds: ["photos"] },
+    "exteriorPhotos",
+    89,
+    "Up to 10 photos",
   );
 
   expectRecommendation(
     { propertyType: "pre_listing", goal: "polished", socialImportance: "somewhat", size: "not_sure", knownNeeds: ["photos", "video"] },
     "preListing",
-    129,
+    349,
   );
 
-  const bookingMailto = buildBookingMailto({
-    name: "Avery Agent",
-    email: "avery@example.com",
-    propertyAddress: "123 Main Street",
-    notes: "Hoping to shoot next Thursday.",
-    packageName: "Essentials",
-    packagePrice: "$530",
-  });
-  const bookingUrl = new URL(bookingMailto);
-  assert.equal(bookingUrl.pathname, "hello@nowallsrealestate.com");
-  assert.equal(bookingUrl.searchParams.get("subject"), "Booking request: Essentials");
-  assert.match(bookingUrl.searchParams.get("body"), /Package price: \$530/);
-  assert.match(bookingUrl.searchParams.get("body"), /Avery Agent/);
-  assert.match(bookingUrl.searchParams.get("body"), /123 Main Street/);
-
-  console.log("No Walls pricing matrices, recommendations, and booking email verified.");
+  console.log("No Walls live-catalog package prices, variants, and recommendations verified.");
 } finally {
   await rm(tempDirectory, { recursive: true, force: true });
 }

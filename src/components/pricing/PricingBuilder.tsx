@@ -1,46 +1,51 @@
 import { ReactNode, useMemo, useState } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Check,
   ChevronDown,
   CircleDollarSign,
+  ExternalLink,
   Film,
   Home,
   Image,
   Layers3,
+  LoaderCircle,
   Map,
   RotateCcw,
   Send,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
+import {
+  ADD_ONS,
+  ARYEO_CATALOG_REVIEWED_AT,
+  PACKAGE_CONFIG,
+  getDefaultCatalogVariant,
+  type AddOnConfig,
+  type PackageConfig,
+  type PackageId,
+} from "../../../shared/aryeoCatalog";
+import {
+  requestBookingSession,
+  type BookingSessionRequest,
+  type BookingSessionResult,
+} from "../../lib/aryeoBooking";
+
+export { PACKAGE_CONFIG };
+
 type QuestionId = "propertyType" | "goal" | "socialImportance" | "size" | "knownNeeds";
-type PriceSizeTier =
+type SizeTier =
   | "under_1000"
   | "1001_2000"
   | "2001_3000"
   | "3001_4000"
   | "4000_6000"
   | "6001_8000"
-  | "over_8000";
-type SizeTier = PriceSizeTier | "not_sure";
-type PackageId =
-  | "starter"
-  | "essentials"
-  | "signature"
-  | "premier"
-  | "casualScroller"
-  | "contentPro"
-  | "influencer"
-  | "airbnbHost"
-  | "airbnbHostPlus"
-  | "airbnbSuperHost"
-  | "airbnbSuperHostPlus"
-  | "landPackage"
-  | "lot"
-  | "locationPackage"
-  | "preListing";
+  | "over_8000"
+  | "not_sure";
 
 type Option = {
   id: string;
@@ -56,25 +61,6 @@ type QuestionConfig = {
   options: Option[];
 };
 
-type PackageConfig = {
-  id: PackageId;
-  name: string;
-  purpose: string;
-  bestFor: string;
-  category: "core" | "social" | "airbnb" | "land" | "pre-listing";
-  includes: string[];
-  pricing?: Partial<Record<PriceSizeTier, { price: number; photos?: string }>>;
-  flatPrice?: number;
-};
-
-type AddOnConfig = {
-  id: string;
-  name: string;
-  purpose: string;
-  price: number;
-  priceSuffix?: string;
-};
-
 type Answers = Partial<Record<QuestionId, string | string[]>>;
 
 type Recommendation = {
@@ -87,18 +73,8 @@ type Recommendation = {
   sizeLabel: string;
 };
 
-type BookingRequestDetails = {
-  name: string;
-  email: string;
-  propertyAddress?: string;
-  notes?: string;
-  packageName: string;
-  packagePrice: string;
-};
-
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ");
 const NO_WALLS_FAVICON_URL = "https://framerusercontent.com/images/LPlC9tqmKBjfv4PD9XJCmiZDn9s.png";
-const NO_WALLS_BOOKING_EMAIL = "hello@nowallsrealestate.com";
 
 const iconMap = {
   home: Home,
@@ -108,16 +84,6 @@ const iconMap = {
   layers: Layers3,
   sparkles: Sparkles,
 };
-
-const PRICE_SIZE_TIERS: PriceSizeTier[] = [
-  "under_1000",
-  "1001_2000",
-  "2001_3000",
-  "3001_4000",
-  "4000_6000",
-  "6001_8000",
-  "over_8000",
-];
 
 const SIZE_LABELS: Record<SizeTier, string> = {
   under_1000: "0-1,000 sq ft",
@@ -129,262 +95,6 @@ const SIZE_LABELS: Record<SizeTier, string> = {
   over_8000: "8,000+ sq ft",
   not_sure: "Square footage not selected",
 };
-
-const tier = (price: number, photos: number) => ({ price, photos: `${photos} photos` });
-
-export const PACKAGE_CONFIG = {
-  packages: {
-    starter: {
-      id: "starter",
-      name: "Starter",
-      purpose: "Simple listing, lower budget, essential photos.",
-      bestFor: "Smaller listings and quick-turn properties that still need polish",
-      category: "core",
-      includes: ["Professional photos", "Agent-branded property website", "2D floor plan"],
-      pricing: {
-        under_1000: tier(195, 25),
-        "1001_2000": tier(229, 30),
-        "2001_3000": tier(265, 35),
-        "3001_4000": tier(300, 40),
-        "4000_6000": tier(335, 45),
-        "6001_8000": tier(370, 50),
-        over_8000: tier(405, 55),
-      },
-    },
-    essentials: {
-      id: "essentials",
-      name: "Essentials",
-      purpose: "The go-to package for agents who want to market with intention.",
-      bestFor: "Standard listings that need a polished, versatile launch",
-      category: "core",
-      includes: [
-        "Professional photos",
-        "Classic video walkthrough or classic vertical reel",
-        "Matterport or Zillow 3D",
-        "2D floor plan",
-        "Virtual twilight",
-        "Agent-branded property website + marketing kit",
-      ],
-      pricing: {
-        under_1000: tier(460, 30),
-        "1001_2000": tier(495, 35),
-        "2001_3000": tier(530, 40),
-        "3001_4000": tier(565, 45),
-        "4000_6000": tier(600, 50),
-        "6001_8000": tier(635, 55),
-        over_8000: tier(670, 60),
-      },
-    },
-    signature: {
-      id: "signature",
-      name: "Signature",
-      purpose: "An immersive package designed to sell high-end homes faster and for more.",
-      bestFor: "Listings that need cinematic depth and a stronger launch",
-      category: "core",
-      includes: [
-        "Professional photos",
-        "Luxe cinematic video or luxe cinematic reel",
-        "Zillow ShowingTime+ 3D tour or Matterport tour",
-        "Up to 10 aerial drone photos + video",
-        "2D floor plan",
-        "Virtual twilight",
-        "Agent-branded property website + marketing kit",
-      ],
-      pricing: {
-        under_1000: tier(714, 30),
-        "1001_2000": tier(749, 35),
-        "2001_3000": tier(784, 40),
-        "3001_4000": tier(819, 45),
-        "4000_6000": tier(854, 50),
-        "6001_8000": tier(889, 55),
-        over_8000: tier(924, 60),
-      },
-    },
-    premier: {
-      id: "premier",
-      name: "Premier",
-      purpose: "A complete package built to elevate a listing and boost buyer interest.",
-      bestFor: "Luxury, high-value, and story-driven properties",
-      category: "core",
-      includes: [
-        "Professional photos",
-        "Luxe cinematic video",
-        "Luxe cinematic reel",
-        "Up to 10 aerial drone photos + video",
-        "Zillow ShowingTime+ 3D tour or Matterport tour",
-        "2D floor plan",
-        "Virtual twilight",
-        "Agent-branded property website + marketing kit",
-      ],
-      pricing: {
-        under_1000: tier(990, 30),
-        "1001_2000": tier(1025, 35),
-        "2001_3000": tier(1060, 40),
-        "3001_4000": tier(1095, 45),
-        "4000_6000": tier(1130, 50),
-        "6001_8000": tier(1165, 55),
-        over_8000: tier(1200, 60),
-      },
-    },
-    casualScroller: {
-      id: "casualScroller",
-      name: "The Casual Scroller",
-      purpose: "A social-ready package that gives a listing an easy content boost.",
-      bestFor: "Agents who want polished listing media and a classic reel",
-      category: "social",
-      includes: [
-        "Professional horizontal and vertical photos",
-        "Classic vertical reel",
-        "2D floor plan",
-        "Virtual twilight",
-        "Agent-branded property website + marketing kit",
-      ],
-      pricing: {
-        under_1000: tier(395, 30),
-        "1001_2000": tier(430, 35),
-        "2001_3000": tier(465, 40),
-        "3001_4000": tier(500, 45),
-        "4000_6000": tier(535, 50),
-        "6001_8000": tier(570, 55),
-        over_8000: tier(605, 60),
-      },
-    },
-    contentPro: {
-      id: "contentPro",
-      name: "The Content Pro",
-      purpose: "A complete listing-and-content package with higher-production social assets.",
-      bestFor: "Agents who want the listing to consistently feed their content channels",
-      category: "social",
-      includes: [
-        "Professional horizontal and vertical photos",
-        "Luxe vertical reel with drone clips",
-        "Coming soon video",
-        "Up to 10 aerial photos + video",
-        "2D floor plan",
-        "Virtual twilight",
-        "Agent-branded property website + marketing kit",
-      ],
-      pricing: {
-        under_1000: tier(595, 30),
-        "1001_2000": tier(630, 35),
-        "2001_3000": tier(665, 40),
-        "3001_4000": tier(700, 45),
-        "4000_6000": tier(735, 50),
-        "6001_8000": tier(770, 55),
-        over_8000: tier(805, 60),
-      },
-    },
-    influencer: {
-      id: "influencer",
-      name: "The Influencer",
-      purpose: "The full personal-brand package with agent and lifestyle scenes.",
-      bestFor: "Agents making personal brand growth a major part of the listing strategy",
-      category: "social",
-      includes: [
-        "Professional horizontal and vertical photos",
-        "Influencer vertical reel with agent/lifestyle scenes",
-        "Coming soon video",
-        "Up to 10 aerial photos + video",
-        "Zillow ShowingTime+ or Matterport 3D",
-        "2D floor plan",
-        "Virtual twilight",
-        "Agent-branded property website + marketing kit",
-      ],
-      pricing: {
-        under_1000: tier(695, 30),
-        "1001_2000": tier(730, 35),
-        "2001_3000": tier(765, 40),
-        "3001_4000": tier(800, 45),
-        "4000_6000": tier(835, 50),
-        "6001_8000": tier(870, 55),
-        over_8000: tier(905, 60),
-      },
-    },
-    airbnbHost: {
-      id: "airbnbHost",
-      name: "Host Package",
-      purpose: "Clean, detail-focused coverage for a short-term rental.",
-      bestFor: "Hosts who need a polished foundational photo set",
-      category: "airbnb",
-      includes: ["Up to 35 professional photos", "Detail photos of staged items and property features"],
-      flatPrice: 295,
-    },
-    airbnbHostPlus: {
-      id: "airbnbHostPlus",
-      name: "Host Package Plus",
-      purpose: "Expanded rental coverage with neighborhood context and light staging.",
-      bestFor: "Hosts who want the property and its location to feel fully considered",
-      category: "airbnb",
-      includes: ["Up to 40 professional photos", "Detail photos", "Neighborhood/lifestyle shots", "Drone photos", "Light staging"],
-      flatPrice: 395,
-    },
-    airbnbSuperHost: {
-      id: "airbnbSuperHost",
-      name: "Super Host Package",
-      purpose: "A richer short-term rental launch with social video.",
-      bestFor: "Established hosts who market beyond the booking platform",
-      category: "airbnb",
-      includes: ["Up to 50 professional photos", "Detail photos", "Neighborhood/lifestyle shots", "Drone photos", "Light staging", "Vertical social reel"],
-      flatPrice: 495,
-    },
-    airbnbSuperHostPlus: {
-      id: "airbnbSuperHostPlus",
-      name: "Super Host Package Plus",
-      purpose: "The complete short-term rental package with reel and 3D tour.",
-      bestFor: "Premium rentals that need maximum visual coverage",
-      category: "airbnb",
-      includes: ["Up to 50 professional photos", "Detail photos", "Neighborhood/lifestyle shots", "Drone photos", "Light staging", "Vertical social reel", "3D tour"],
-      flatPrice: 595,
-    },
-    landPackage: {
-      id: "landPackage",
-      name: "Land Package",
-      purpose: "Full visual context for land, lots, and acreage.",
-      bestFor: "Land listings where boundaries, access, and neighborhood context matter",
-      category: "land",
-      includes: ["Up to 20 ground photos", "10-15 drone photos with boundary graphics", "Neighborhood photos", "Drone video with boundary lines", "Neighborhood/lifestyle video clips"],
-      flatPrice: 499,
-    },
-    lot: {
-      id: "lot",
-      name: "The Lot",
-      purpose: "A compact photo package for a straightforward lot listing.",
-      bestFor: "Lots that need clean ground and aerial coverage",
-      category: "land",
-      includes: ["Up to 10 exterior photos", "Up to 10 drone photos", "Agent-branded property website"],
-      flatPrice: 249,
-    },
-    locationPackage: {
-      id: "locationPackage",
-      name: "Location Package",
-      purpose: "A land package that adds neighborhood and lifestyle context.",
-      bestFor: "Location-driven lots where the surrounding area helps sell the story",
-      category: "land",
-      includes: ["Up to 10 exterior photos", "Up to 10 drone photos", "Neighborhood/lifestyle photos", "Agent-branded property website"],
-      flatPrice: 349,
-    },
-    preListing: {
-      id: "preListing",
-      name: "Pre-Listing Package",
-      purpose: "Exterior photos and video clips before the property is ready to list.",
-      bestFor: "Capturing a property's exterior at its best before the full listing launch",
-      category: "pre-listing",
-      includes: ["Exterior photos", "Exterior video clips"],
-      flatPrice: 129,
-    },
-  } satisfies Record<PackageId, PackageConfig>,
-};
-
-const ADD_ONS = {
-  classicVideo: { id: "classicVideo", name: "Classic Walkthrough Video", purpose: "Add a clean horizontal walkthrough video.", price: 249 },
-  classicReel: { id: "classicReel", name: "Classic Reel", purpose: "Add a social-ready vertical reel.", price: 189 },
-  contentSpecialist: { id: "contentSpecialist", name: "Content Specialist Reel", purpose: "Add a higher-production vertical reel with effects and drone clips.", price: 289 },
-  influencerReel: { id: "influencerReel", name: "Influencer Reel", purpose: "Add agent and lifestyle scenes to fully support the agent's brand.", price: 389 },
-  droneCombo: { id: "droneCombo", name: "Drone Photo + Video Combo", purpose: "Add aerial photo and edited aerial video coverage.", price: 199 },
-  twilightShoot: { id: "twilightShoot", name: "Twilight Shoot", purpose: "Add a dedicated twilight visit for a stronger hero image.", price: 159 },
-  virtualStaging: { id: "virtualStaging", name: "Virtual Staging", purpose: "Stage an empty room digitally.", price: 39, priceSuffix: " / image" },
-  agentScenes: { id: "agentScenes", name: "Agent Scenes", purpose: "Add agent-hosted scenes to the selected video.", price: 99 },
-} satisfies Record<string, AddOnConfig>;
 
 export const QUESTION_CONFIG: QuestionConfig[] = [
   {
@@ -467,14 +177,11 @@ const PACKAGE_ICONS: Record<PackageId, keyof typeof iconMap> = {
   casualScroller: "film",
   contentPro: "film",
   influencer: "sparkles",
-  airbnbHost: "home",
-  airbnbHostPlus: "home",
-  airbnbSuperHost: "sparkles",
-  airbnbSuperHostPlus: "sparkles",
   landPackage: "map",
   lot: "map",
   locationPackage: "map",
   preListing: "layers",
+  exteriorPhotos: "image",
 };
 
 const getPackage = (id: PackageId) => PACKAGE_CONFIG.packages[id];
@@ -491,34 +198,10 @@ const answerLabel = (questionId: QuestionId, value: string) => {
 
 const formatPrice = (price: number, isStarting = false) => `${isStarting ? "Starting at " : ""}$${price.toLocaleString()}`;
 
-export function buildBookingMailto(details: BookingRequestDetails) {
-  const body = [
-    "Hi No Walls,",
-    "",
-    "I'd like to book the following package:",
-    "",
-    `Package: ${details.packageName}`,
-    `Package price: ${details.packagePrice}`,
-    `Name: ${details.name}`,
-    `Email: ${details.email}`,
-    details.propertyAddress ? `Property address: ${details.propertyAddress}` : undefined,
-    details.notes ? `Notes: ${details.notes}` : undefined,
-  ]
-    .filter((line): line is string => line !== undefined)
-    .join("\n");
-
-  return `mailto:${NO_WALLS_BOOKING_EMAIL}?subject=${encodeURIComponent(`Booking request: ${details.packageName}`)}&body=${encodeURIComponent(body)}`;
-}
-
-export function getPackagePricing(packageConfig: PackageConfig, size: SizeTier = "not_sure") {
-  if (packageConfig.flatPrice !== undefined) {
-    return { price: packageConfig.flatPrice, photos: undefined, isStarting: false };
-  }
-
-  const selectedTier = size === "not_sure" ? PRICE_SIZE_TIERS[0] : size;
-  const pricing = packageConfig.pricing?.[selectedTier] ?? packageConfig.pricing?.[PRICE_SIZE_TIERS[0]];
-  if (!pricing) throw new Error(`Missing pricing for ${packageConfig.name}`);
-  return { ...pricing, isStarting: size === "not_sure" };
+export function getPackagePricing(packageConfig: PackageConfig, _size: SizeTier = "not_sure") {
+  const selectedVariant = packageConfig.variants[0];
+  if (!selectedVariant) throw new Error(`Missing Aryeo variant for ${packageConfig.name}`);
+  return { price: selectedVariant.price, photos: packageConfig.photoCount, isStarting: false };
 }
 
 const packageIncludesDrone = (packageId: PackageId) => [
@@ -526,10 +209,10 @@ const packageIncludesDrone = (packageId: PackageId) => [
   "premier",
   "contentPro",
   "influencer",
-  "airbnbHostPlus",
-  "airbnbSuperHost",
-  "airbnbSuperHostPlus",
   "landPackage",
+  "lot",
+  "locationPackage",
+  "preListing",
 ].includes(packageId);
 
 const packageIncludesVideo = (packageId: PackageId) => [
@@ -539,13 +222,11 @@ const packageIncludesVideo = (packageId: PackageId) => [
   "casualScroller",
   "contentPro",
   "influencer",
-  "airbnbSuperHost",
-  "airbnbSuperHostPlus",
   "landPackage",
   "preListing",
 ].includes(packageId);
 
-const packageIncludesTwilight = (packageId: PackageId) => ["essentials", "signature", "premier", "casualScroller", "contentPro", "influencer"].includes(packageId);
+const packageIncludesTwilight = (packageId: PackageId) => ["essentials", "signature", "premier", "preListing"].includes(packageId);
 
 export function getRecommendation(answers: Answers): Recommendation {
   const propertyType = getSingleAnswer(answers, "propertyType");
@@ -562,22 +243,27 @@ export function getRecommendation(answers: Answers): Recommendation {
     packageId = goal === "essentials_only" ? "lot" : goal === "polished" ? "locationPackage" : "landPackage";
     reason = "Land listings benefit from drone context, boundary graphics, and access imagery more than a standard interior-first package.";
   } else if (propertyType === "short_term_rental") {
-    if (goal === "premium" || goal === "custom" || socialImportance === "major") {
-      packageId = "airbnbSuperHostPlus";
-      reason = "This gives a premium rental the fullest photo, lifestyle, social, and 3D coverage.";
+    if (socialImportance === "major") {
+      packageId = "influencer";
+      reason = "This live social package gives a premium rental strong listing coverage plus agent-led lifestyle content.";
     } else if (goal === "personal_brand" || socialImportance === "very") {
-      packageId = "airbnbSuperHost";
-      reason = "This adds social video and broader visual coverage to the short-term rental launch.";
-    } else if (goal === "polished" || goal === "sell_fast" || socialImportance === "somewhat") {
-      packageId = "airbnbHostPlus";
-      reason = "This adds neighborhood, drone, and styling context to a polished rental listing.";
+      packageId = "contentPro";
+      reason = "This live social package combines polished listing coverage with higher-production short-form content.";
+    } else if (goal === "premium" || goal === "custom" || goal === "sell_fast") {
+      packageId = "signature";
+      reason = "Signature is the closest live Aryeo offering for a rental that needs photo, video, aerial, and 3D depth.";
+    } else if (goal === "polished" || socialImportance === "somewhat") {
+      packageId = "essentials";
+      reason = "Essentials keeps the rental presentation polished while letting you choose the most useful video, reel, or 3D enhancement.";
     } else {
-      packageId = "airbnbHost";
-      reason = "This keeps the rental coverage focused on strong photos and the details guests care about.";
+      packageId = "starter";
+      reason = "No rental-only package is on the live form, so Starter is the closest current option for focused photo coverage.";
     }
   } else if (propertyType === "pre_listing") {
-    packageId = "preListing";
-    reason = "A pre-listing package gives you strong coming-soon assets without waiting for the full listing launch.";
+    packageId = goal === "essentials_only" ? "exteriorPhotos" : "preListing";
+    reason = goal === "essentials_only"
+      ? "Exterior Photos is the focused live option for a simple coming-soon preview."
+      : "The Pre Listing Package gives you broad exterior, aerial, neighborhood, video, and twilight coverage before the full launch.";
   } else if (propertyType === "luxury") {
     packageId = "premier";
     reason = "A higher-value listing needs a premium presentation with video, social assets, twilight, and lifestyle context.";
@@ -1030,10 +716,10 @@ function RecommendationScreen({
 
       <aside className="space-y-4">
         <SummaryPanel answers={answers} onEdit={onEdit} />
-        <ChooseForMeCard />
+        <ChooseForMeCard onChoose={openBookingForm} />
         <PackageComparison />
         <p className="px-1 text-xs leading-5 text-[#828487]">
-          Package pricing reflects the selected square-foot tier. Add-ons and custom production needs change the final total.
+          Prices match the production NW Order Now catalog reviewed {ARYEO_CATALOG_REVIEWED_AT}. Aryeo confirms availability, selected options, and the final total.
         </p>
       </aside>
     </div>
@@ -1042,31 +728,92 @@ function RecommendationScreen({
 
 function BookingRequestForm({ recommendation }: { recommendation: Recommendation }) {
   const packagePrice = formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice);
+  const defaultVariant = getDefaultCatalogVariant(recommendation.package.id);
+  const [selectedVariantKey, setSelectedVariantKey] = useState(defaultVariant.key);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<BookingSessionResult | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const selectedVariant = recommendation.package.variants.find((variant) => variant.key === selectedVariantKey) || defaultVariant;
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const mailto = buildBookingMailto({
-      name: String(formData.get("name") ?? "").trim(),
-      email: String(formData.get("email") ?? "").trim(),
-      propertyAddress: String(formData.get("propertyAddress") ?? "").trim(),
-      notes: String(formData.get("notes") ?? "").trim(),
-      packageName: recommendation.package.name,
-      packagePrice,
-    });
+    const request: BookingSessionRequest = {
+      customer: {
+        firstName: String(formData.get("firstName") ?? "").trim(),
+        lastName: String(formData.get("lastName") ?? "").trim(),
+        email: String(formData.get("email") ?? "").trim(),
+        phone: String(formData.get("phone") ?? "").trim(),
+      },
+      address: {
+        streetNumber: String(formData.get("streetNumber") ?? "").trim(),
+        streetName: String(formData.get("streetName") ?? "").trim(),
+        unitNumber: String(formData.get("unitNumber") ?? "").trim() || undefined,
+        city: String(formData.get("city") ?? "").trim(),
+        stateOrProvince: String(formData.get("stateOrProvince") ?? "").trim(),
+        postalCode: String(formData.get("postalCode") ?? "").trim(),
+        country: "US",
+      },
+      selection: {
+        packageId: recommendation.package.id,
+        variantKey: selectedVariantKey,
+      },
+      companyWebsite: String(formData.get("companyWebsite") ?? "").trim() || undefined,
+    };
 
-    window.location.assign(mailto);
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      setResult(await requestBookingSession(request));
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Please review the booking details and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const fieldClass =
     "mt-2 h-12 w-full rounded-xl border border-white/15 bg-white/[0.07] px-4 text-base text-white outline-none transition placeholder:text-white/35 focus:border-white/55 focus:bg-white/[0.1]";
 
+  if (result) {
+    return (
+      <div id="booking-request" className="mt-8 border-t border-white/12 pt-8" role="status">
+        <div className="flex items-start gap-4 rounded-2xl border border-white/15 bg-white/[0.08] p-5 sm:p-6">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#111011]">
+            <ShieldCheck className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/45">Ready for Aryeo</p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-normal">Finish the live booking</h3>
+            <p className="mt-3 text-sm leading-6 text-white/68">
+              {result.carriesCustomerDetails
+                ? "Your contact and property details are prefilled. Aryeo will ask you to review them, choose the service below, schedule, accept the terms, and confirm."
+                : result.notice || "Continue in Aryeo to enter the property details, schedule, accept the terms, and confirm."}
+            </p>
+            <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/40">Choose in Aryeo</p>
+              <p className="mt-2 font-semibold">{recommendation.package.name} — {selectedVariant.label}</p>
+              <p className="mt-1 text-sm text-white/55">{formatPrice(selectedVariant.price)} before any additional selections</p>
+            </div>
+            <a
+              className="mt-5 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-white px-7 text-base font-medium text-[#111011] transition hover:bg-[#d6dbdc]"
+              href={result.bookingUrl}
+            >
+              Continue in Aryeo
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form id="booking-request" className="mt-8 border-t border-white/12 pt-8" onSubmit={handleSubmit}>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/45">Booking request</p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-normal">Tell us where to follow up</h3>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/45">Live booking handoff</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-normal">Prefill your Aryeo booking</h3>
         </div>
         <div className="border-l border-white/15 pl-4 sm:text-right">
           <p className="text-sm text-white/50">{recommendation.package.name}</p>
@@ -1076,32 +823,96 @@ function BookingRequestForm({ recommendation }: { recommendation: Recommendation
 
       <div className="mt-7 grid gap-5 sm:grid-cols-2">
         <label className="text-sm font-medium text-white/78">
-          Name
-          <input className={fieldClass} name="name" autoComplete="name" required />
+          First name
+          <input className={fieldClass} name="firstName" autoComplete="given-name" maxLength={100} required />
+        </label>
+        <label className="text-sm font-medium text-white/78">
+          Last name
+          <input className={fieldClass} name="lastName" autoComplete="family-name" maxLength={100} required />
         </label>
         <label className="text-sm font-medium text-white/78">
           Email
-          <input className={fieldClass} name="email" type="email" autoComplete="email" inputMode="email" required />
+          <input className={fieldClass} name="email" type="email" autoComplete="email" inputMode="email" maxLength={254} required />
+        </label>
+        <label className="text-sm font-medium text-white/78">
+          Phone
+          <input className={fieldClass} name="phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={30} required />
         </label>
       </div>
 
-      <label className="mt-5 block text-sm font-medium text-white/78">
-        Property address <span className="font-normal text-white/40">(optional)</span>
-        <input className={fieldClass} name="propertyAddress" autoComplete="street-address" placeholder="123 Main Street" />
-      </label>
+      <fieldset className="mt-7">
+        <legend className="text-sm font-semibold uppercase tracking-[0.14em] text-white/45">Property address</legend>
+        <div className="mt-1 grid gap-5 sm:grid-cols-[0.38fr_1fr]">
+          <label className="text-sm font-medium text-white/78">
+            Street number
+            <input className={fieldClass} name="streetNumber" autoComplete="off" maxLength={30} required />
+          </label>
+          <label className="text-sm font-medium text-white/78">
+            Street name
+            <input className={fieldClass} name="streetName" maxLength={150} placeholder="Main Street" required />
+          </label>
+        </div>
+        <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="text-sm font-medium text-white/78">
+            Unit <span className="font-normal text-white/40">(optional)</span>
+            <input className={fieldClass} name="unitNumber" autoComplete="address-line2" maxLength={50} />
+          </label>
+          <label className="text-sm font-medium text-white/78">
+            City
+            <input className={fieldClass} name="city" autoComplete="address-level2" maxLength={100} required />
+          </label>
+          <label className="text-sm font-medium text-white/78">
+            State
+            <input className={fieldClass} name="stateOrProvince" autoComplete="address-level1" maxLength={100} placeholder="CO" required />
+          </label>
+          <label className="text-sm font-medium text-white/78">
+            ZIP code
+            <input className={fieldClass} name="postalCode" autoComplete="postal-code" inputMode="numeric" maxLength={20} required />
+          </label>
+        </div>
+      </fieldset>
 
-      <label className="mt-5 block text-sm font-medium text-white/78">
-        Anything else? <span className="font-normal text-white/40">(optional)</span>
-        <textarea
-          className="mt-2 min-h-28 w-full resize-y rounded-xl border border-white/15 bg-white/[0.07] px-4 py-3 text-base text-white outline-none transition placeholder:text-white/35 focus:border-white/55 focus:bg-white/[0.1]"
-          name="notes"
-          placeholder="Timing, access, or anything helpful for the shoot"
-        />
-      </label>
+      {recommendation.package.variants.length > 1 && (
+        <label className="mt-7 block text-sm font-medium text-white/78">
+          Package option
+          <select
+            className={fieldClass}
+            name="variantKey"
+            value={selectedVariantKey}
+            onChange={(event) => setSelectedVariantKey(event.target.value)}
+            required
+          >
+            {recommendation.package.variants.map((variant) => (
+              <option className="bg-[#111011] text-white" key={variant.key} value={variant.key}>
+                {variant.label} — {formatPrice(variant.price)}
+              </option>
+            ))}
+          </select>
+          {recommendation.package.selectionHint && <span className="mt-2 block text-xs leading-5 text-white/45">{recommendation.package.selectionHint}</span>}
+        </label>
+      )}
 
-      <Button className="mt-6 w-full sm:w-auto" type="submit" size="lg" variant="gold">
-        <Send className="h-4 w-4" />
-        Send booking request
+      <div className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden" aria-hidden="true">
+        <label>
+          Company website
+          <input name="companyWebsite" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
+
+      <p className="mt-6 max-w-3xl text-sm leading-6 text-white/55">
+        Aryeo remains the system of record. On the next screen you will review the property, choose the matching service and any add-ons, schedule, accept the terms, and confirm the order.
+      </p>
+
+      {errorMessage && (
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-red-300/30 bg-red-400/10 p-4 text-sm leading-6 text-red-100" role="alert">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          {errorMessage}
+        </div>
+      )}
+
+      <Button className="mt-6 w-full sm:w-auto" type="submit" size="lg" variant="gold" disabled={submitting}>
+        {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        {submitting ? "Preparing Aryeo…" : "Prepare live booking"}
       </Button>
     </form>
   );
@@ -1137,7 +948,7 @@ function IncludedServices({ services }: { services: string[] }) {
 function RecommendedAddOns({ addOns }: { addOns: AddOnConfig[] }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5">
-      <h3 className="text-xl font-semibold tracking-normal">Recommended add-ons</h3>
+      <h3 className="text-xl font-semibold tracking-normal">Recommended options</h3>
       <div className="mt-5 space-y-3">
         {addOns.length > 0 ? (
           addOns.map((addOn) => (
@@ -1146,6 +957,9 @@ function RecommendedAddOns({ addOns }: { addOns: AddOnConfig[] }) {
                 <div>
                   <p className="font-semibold">{addOn.name}</p>
                   <p className="mt-1 text-sm leading-6 text-white/60">{addOn.purpose}</p>
+                  <p className="mt-2 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-white/35">
+                    {addOn.aryeoType === "MAIN" ? "Separate service in Aryeo" : "Aryeo add-on"}
+                  </p>
                 </div>
                 <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111011]">
                   ${addOn.price.toLocaleString()}{addOn.priceSuffix || ""}
@@ -1154,7 +968,7 @@ function RecommendedAddOns({ addOns }: { addOns: AddOnConfig[] }) {
             </div>
           ))
         ) : (
-          <p className="text-sm leading-6 text-white/64">No must-have add-ons based on your answers. This package should cover the core need.</p>
+          <p className="text-sm leading-6 text-white/64">No must-have extras based on your answers. This package should cover the core need.</p>
         )}
       </div>
     </div>
@@ -1187,13 +1001,13 @@ function SummaryPanel({ answers, onEdit }: { answers: Answers; onEdit: (question
   );
 }
 
-function ChooseForMeCard() {
+function ChooseForMeCard({ onChoose }: { onChoose: () => void }) {
   return (
     <div className="rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
       <p className="text-base font-semibold text-[#111011]">Want us to choose for you?</p>
-      <p className="mt-2 text-sm leading-6 text-[#606266]">Send us the listing and we'll recommend the right package.</p>
-      <Button className="mt-4 w-full" onClick={() => console.log("Send listing CTA")}>
-        Send listing
+      <p className="mt-2 text-sm leading-6 text-[#606266]">Start with this recommendation and confirm the final service details in Aryeo.</p>
+      <Button className="mt-4 w-full" onClick={onChoose}>
+        Start booking details
       </Button>
     </div>
   );
