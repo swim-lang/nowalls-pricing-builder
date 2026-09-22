@@ -21,13 +21,12 @@ try {
   const { getRecommendation, PACKAGE_CONFIG } = await import(pathToFileURL(bundlePath).href);
 
   const packageExpectations = {
-    starter: { price: 209, variants: 1 },
-    essentials: { price: 495, variants: 4 },
-    signature: { price: 749, variants: 4 },
-    premier: { price: 1195, variants: 2 },
-    casualScroller: { price: 395, variants: 1 },
-    contentPro: { price: 595, variants: 1 },
-    influencer: { price: 695, variants: 1 },
+    starter: { price: 195, variants: 7 },
+    essentials: { price: 460, variants: 7 },
+    signature: { price: 714, variants: 7 },
+    premier: { price: 990, variants: 7 },
+    influencer: { price: 609, variants: 7 },
+    contentCreator: { price: 1295, variants: 3 },
     landPackage: { price: 495, variants: 1 },
     lot: { price: 179, variants: 1 },
     locationPackage: { price: 249, variants: 1 },
@@ -41,57 +40,71 @@ try {
     const packageConfig = PACKAGE_CONFIG.packages[packageId];
     assert.equal(packageConfig.variants[0].price, expected.price, `${packageId} price changed`);
     assert.equal(packageConfig.variants.length, expected.variants, `${packageId} variant count changed`);
-    assert.ok(packageConfig.variants.every((variant) => variant.price === expected.price), `${packageId} variants must share the reviewed live price`);
   }
 
-  const expectRecommendation = (answers, expectedPackage, expectedPrice, expectedPhotos) => {
+  assert.deepEqual(PACKAGE_CONFIG.packages.starter.variants.map((item) => item.price), [195, 229, 265, 300, 335, 370, 405]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.essentials.variants.map((item) => item.price), [460, 495, 530, 565, 600, 635, 670]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.signature.variants.map((item) => item.price), [714, 749, 784, 819, 854, 889, 924]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.premier.variants.map((item) => item.price), [990, 1025, 1060, 1095, 1130, 1165, 1200]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.influencer.variants.map((item) => item.price), [609, 644, 679, 714, 749, 784, 819]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.contentCreator.variants.map((item) => item.price), [1295, 1595, 1795]);
+
+  const expectRecommendation = (answers, expectedPackage, expectedPrice, expectedPhotos, expectedStarting = false) => {
     const result = getRecommendation(answers);
     assert.equal(result.package.id, expectedPackage);
     assert.equal(result.estimatedPrice, expectedPrice);
-    assert.equal(result.isStartingPrice, false);
+    assert.equal(result.isStartingPrice, expectedStarting);
     if (expectedPhotos) assert.equal(result.photoCount, expectedPhotos);
   };
 
   expectRecommendation(
     { propertyType: "standard", goal: "essentials_only", socialImportance: "not_important", size: "1001_2000", knownNeeds: ["photos"] },
     "starter",
-    209,
-    "Up to 25 photos",
+    229,
+    "30 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "polished", socialImportance: "not_important", size: "2001_3000", knownNeeds: ["photos", "floor_plan"] },
     "essentials",
-    495,
-    "Up to 35 photos",
+    530,
+    "40 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "sell_fast", socialImportance: "not_important", size: "6001_8000", knownNeeds: ["video", "drone", "website"] },
     "signature",
-    749,
-    "Up to 40 photos",
+    889,
+    "55 photos",
   );
 
   expectRecommendation(
     { propertyType: "luxury", goal: "premium", socialImportance: "major", size: "over_8000", knownNeeds: ["video", "drone", "website", "social_reels"] },
     "premier",
-    1195,
-    "Up to 45 photos",
+    1200,
+    "60 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "personal_brand", socialImportance: "major", size: "3001_4000", knownNeeds: ["social_reels"] },
     "influencer",
-    695,
-    "Up to 40 photos",
+    714,
+    "45 photos",
   );
 
   expectRecommendation(
     { propertyType: "short_term_rental", goal: "premium", socialImportance: "very", size: "4000_6000", knownNeeds: ["photos", "video"] },
-    "contentPro",
-    595,
-    "Up to 35 photos",
+    "influencer",
+    749,
+    "50 photos",
+  );
+
+  expectRecommendation(
+    { propertyType: "standard", goal: "long_form", socialImportance: "major", size: "2001_3000", knownNeeds: ["long_form", "social_reels"] },
+    "contentCreator",
+    1295,
+    "Horizontal + vertical photos",
+    true,
   );
 
   expectRecommendation(
@@ -114,7 +127,7 @@ try {
     349,
   );
 
-  console.log("No Walls live-catalog package prices, variants, and recommendations verified.");
+  console.log("No Walls September pricing tiers and review-mode recommendations verified.");
 } finally {
   await rm(tempDirectory, { recursive: true, force: true });
 }

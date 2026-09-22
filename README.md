@@ -1,18 +1,17 @@
 # No Walls Pricing Builder
 
-A custom recommendation experience backed by the production No Walls Aryeo order form.
+A private, review-only recommendation concept for No Walls' September 2026 pricing.
 
-## What is connected
+## Current review phase
 
-- Package names, prices, photo counts, and variant choices mirror the production `NW Order Now` catalog reviewed on September 2, 2026.
-- The browser posts customer, structured address, and package-choice data to `/api/booking-session`.
-- The Vercel Function geocodes U.S. addresses through the public U.S. Census Geocoder because Aryeo requires coordinates for address-prefilled sessions.
-- The Vercel Function keeps the Aryeo API key server-side and creates an Aryeo order-form session.
-- The customer finishes product selection, add-ons, scheduling, terms acceptance, and confirmation in Aryeo.
-- If the function is disabled or unavailable, the UI still provides a direct link to the live No Walls order form.
-- If an address cannot be geocoded, the session still carries the customer's contact details and Aryeo asks them to confirm the property address.
+- Package names, square-footage tiers, photo counts, Creator tiers, and package add-ons mirror Brian's September v2 pricing supplied on September 21, 2026.
+- The simplified video presentation shows Classic, Luxe, and Influencer levels with horizontal or vertical formats. À-la-carte video prices remain visibly pending until Brian confirms them.
+- The UI is intentionally review-only. It does not collect customer details, create Aryeo sessions, or change the restored production order form.
+- The Vercel endpoint also rejects session creation while `PRICING_REVIEW_ONLY` is enabled in `shared/aryeoCatalog.ts`.
+- The project retains the tested Aryeo session implementation for a later, explicitly approved connection phase.
+- The configured order-form ID belongs to the private prototype form, never Brian's restored production form.
 
-Aryeo's order-form-session API does not accept a preselected product. The result screen therefore tells the customer exactly which package and variant to select after the handoff. Do not replace this with a direct Orders API write until the complete scheduling and terms flow has been proven in a non-production workspace.
+When connection work resumes, Aryeo's order-form-session API can prefill customer and property data but cannot preselect a product. The customer must still choose the matching package, schedule, accept the terms, and confirm in Aryeo. Do not replace this with a direct Orders API write until the complete scheduling and terms flow has been proven against the private prototype form.
 
 ## Local development
 
@@ -21,18 +20,18 @@ npm install
 npm run dev
 ```
 
-The Vite development server serves the UI only. Use `vercel dev` when testing the `/api/booking-session` function locally.
+The Vite development server serves the review UI. Use `vercel dev` only when testing the API boundary locally.
 
 ## Server configuration
 
 Copy `.env.example` to `.env.local` and provide:
 
 - `ARYEO_API_KEY`: a server-only Aryeo API key.
-- `ARYEO_BOOKING_ENABLED=true`: explicitly enables session creation.
-- `ARYEO_ORDER_FORM_ID`: defaults to the audited production `NW Order Now` form.
+- `ARYEO_BOOKING_ENABLED=true`: explicitly enables session creation after review mode is removed.
+- `ARYEO_ORDER_FORM_ID`: defaults to the private prototype form.
 - `ARYEO_SUCCESS_URL`: optional HTTPS return page after a completed Aryeo order.
 
-Never use a `VITE_` prefix for the API key; Vite exposes those variables to the browser bundle. With `ARYEO_BOOKING_ENABLED=false`, submissions produce a safe direct-form handoff and do not call Aryeo's API.
+Never use a `VITE_` prefix for the API key; Vite exposes those variables to the browser bundle. Review mode takes precedence over the environment and returns `PRICING_REVIEW_ONLY` without calling Aryeo.
 
 ## Verification
 
@@ -42,10 +41,10 @@ npm test
 npm run build
 ```
 
-The integration tests verify request validation, the supported Aryeo payload, the API call boundary, trusted redirect URLs, current catalog values, and that server credential identifiers and the private API target do not appear in the browser bundle.
+The tests verify the September price matrix, recommendation behavior, review-only endpoint, supported Aryeo payload, trusted redirect URLs, and the browser/server credential boundary.
 
 ## Deployment
 
-This project includes a Vercel Function in `api/booking-session.ts` and a `vercel.json` that builds the Vite output to `dist`. Configure the server variables in the deployment environment before enabling live session creation.
+This project includes a Vercel Function in `api/booking-session.ts` and a `vercel.json` that builds the Vite output to `dist`. Keep review mode enabled until the visual pricing concept is approved and the private Aryeo form has been aligned.
 
 The generated `docs/` directory remains a static build for GitHub Pages. Static hosting cannot execute the server function, so that version uses the direct Aryeo fallback rather than carrying customer details into a session.

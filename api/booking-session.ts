@@ -1,4 +1,4 @@
-import { ARYEO_ORDER_FORM_ID, ARYEO_ORDER_FORM_URL } from "../shared/aryeoCatalog.js";
+import { ARYEO_ORDER_FORM_ID, ARYEO_ORDER_FORM_URL, PRICING_REVIEW_ONLY } from "../shared/aryeoCatalog.js";
 import {
   AryeoApiError,
   BookingValidationError,
@@ -26,14 +26,26 @@ async function handleBookingSession(request: Request): Promise<Response> {
     return json({
       ok: true,
       service: "no-walls-aryeo-booking",
-      configured: bookingEnabled && Boolean(apiKey),
-      mode: bookingEnabled ? "live" : "direct-order-form",
+      configured: !PRICING_REVIEW_ONLY && bookingEnabled && Boolean(apiKey),
+      mode: PRICING_REVIEW_ONLY ? "review-only" : bookingEnabled ? "live" : "direct-order-form",
       orderFormUrl: ARYEO_ORDER_FORM_URL,
     });
   }
 
   if (request.method !== "POST") {
     return json({ error: { code: "METHOD_NOT_ALLOWED", message: "Use POST to prepare a booking." } }, 405);
+  }
+
+  if (PRICING_REVIEW_ONLY) {
+    return json(
+      {
+        error: {
+          code: "PRICING_REVIEW_ONLY",
+          message: "This pricing concept is in review mode and cannot create an Aryeo session.",
+        },
+      },
+      409,
+    );
   }
 
   const contentLength = Number(request.headers.get("content-length") || 0);

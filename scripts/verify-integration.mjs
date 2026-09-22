@@ -28,7 +28,7 @@ const validInput = {
   },
   selection: {
     packageId: "essentials",
-    variantKey: "vertical-reel",
+    variantKey: "1001_2000",
   },
 };
 
@@ -54,7 +54,7 @@ try {
   assert.equal(validated.customer.email, "avery@example.com");
   assert.equal(validated.address.country, "US");
   assert.equal(validated.packageConfig.aryeoProductTitle, "Essentials Package");
-  assert.equal(validated.variant.label, "With Vertical Reel");
+  assert.equal(validated.variant.label, "1,001–2,000 sq ft");
   assert.equal(validated.variant.price, 495);
 
   const payload = buildAryeoSessionPayload(
@@ -215,28 +215,22 @@ try {
     logLevel: "silent",
   });
   const endpoint = (await import(pathToFileURL(endpointBundlePath).href)).default;
-  process.env.ARYEO_BOOKING_ENABLED = "false";
-  delete process.env.ARYEO_API_KEY;
-
-  const directResponse = await endpoint.fetch(new Request("https://example.com/api/booking-session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(validInput),
-  }));
-  const directBody = await directResponse.json();
-  assert.equal(directResponse.status, 200);
-  assert.equal(directBody.mode, "direct-order-form");
-  assert.equal(directBody.carriesCustomerDetails, false);
-  assert.match(directBody.bookingUrl, /^https:\/\/nowalls\.aryeo\.com\/order-forms\//);
-
   process.env.ARYEO_BOOKING_ENABLED = "true";
-  const unconfiguredResponse = await endpoint.fetch(new Request("https://example.com/api/booking-session", {
+  process.env.ARYEO_API_KEY = "unit-test-token";
+
+  const statusResponse = await endpoint.fetch(new Request("https://example.com/api/booking-session"));
+  const statusBody = await statusResponse.json();
+  assert.equal(statusResponse.status, 200);
+  assert.equal(statusBody.mode, "review-only");
+  assert.equal(statusBody.configured, false);
+
+  const reviewOnlyResponse = await endpoint.fetch(new Request("https://example.com/api/booking-session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(validInput),
   }));
-  assert.equal(unconfiguredResponse.status, 503);
-  assert.equal((await unconfiguredResponse.json()).error.code, "ARYEO_NOT_CONFIGURED");
+  assert.equal(reviewOnlyResponse.status, 409);
+  assert.equal((await reviewOnlyResponse.json()).error.code, "PRICING_REVIEW_ONLY");
 
   await build({
     entryPoints: ["src/main.tsx"],

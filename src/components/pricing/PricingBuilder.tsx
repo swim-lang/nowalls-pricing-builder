@@ -21,31 +21,27 @@ import {
 
 import {
   ADD_ONS,
-  ARYEO_CATALOG_REVIEWED_AT,
+  FEATURED_PACKAGE_IDS,
   PACKAGE_CONFIG,
+  PRICING_CATALOG_REVIEWED_AT,
+  PRICING_REVIEW_ONLY,
   getDefaultCatalogVariant,
+  getPackagePricingForSize,
   type AddOnConfig,
   type PackageConfig,
   type PackageId,
+  type SizeTier,
 } from "../../../shared/aryeoCatalog";
 import {
   requestBookingSession,
   type BookingSessionRequest,
   type BookingSessionResult,
 } from "../../lib/aryeoBooking";
+import PricingOverview from "./PricingOverview";
 
 export { PACKAGE_CONFIG };
 
 type QuestionId = "propertyType" | "goal" | "socialImportance" | "size" | "knownNeeds";
-type SizeTier =
-  | "under_1000"
-  | "1001_2000"
-  | "2001_3000"
-  | "3001_4000"
-  | "4000_6000"
-  | "6001_8000"
-  | "over_8000"
-  | "not_sure";
 
 type Option = {
   id: string;
@@ -71,6 +67,7 @@ type Recommendation = {
   isStartingPrice: boolean;
   photoCount?: string;
   sizeLabel: string;
+  sizeTier: SizeTier;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ");
@@ -86,13 +83,13 @@ const iconMap = {
 };
 
 const SIZE_LABELS: Record<SizeTier, string> = {
-  under_1000: "0-1,000 sq ft",
-  "1001_2000": "1,001-2,000 sq ft",
-  "2001_3000": "2,001-3,000 sq ft",
-  "3001_4000": "3,001-4,000 sq ft",
-  "4000_6000": "4,000-6,000 sq ft",
-  "6001_8000": "6,001-8,000 sq ft",
-  over_8000: "8,000+ sq ft",
+  under_1000: "0–1,000 sq ft",
+  "1001_2000": "1,001–2,000 sq ft",
+  "2001_3000": "2,001–3,000 sq ft",
+  "3001_4000": "3,001–4,000 sq ft",
+  "4000_6000": "4,001–6,000 sq ft",
+  "6001_8000": "6,001–8,000 sq ft",
+  over_8000: "8,001+ sq ft",
   not_sure: "Square footage not selected",
 };
 
@@ -120,6 +117,8 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
       { id: "sell_fast", label: "I need to sell this fast", hint: "More media depth to help the listing move." },
       { id: "premium", label: "I want this listing to feel premium", hint: "A higher-touch presentation for a stronger first impression." },
       { id: "personal_brand", label: "I want content that also builds my personal brand", hint: "Listing media plus agent-facing social assets." },
+      { id: "long_form", label: "I want to build a YouTube and long-form content presence", hint: "One production day that creates a larger bank of brand content." },
+      { id: "monthly_content", label: "I need a consistent monthly content plan", hint: "A custom cadence built around your channels and business goals." },
       { id: "custom", label: "I want something more custom", hint: "A flexible recommendation with room to tailor production." },
     ],
   },
@@ -162,6 +161,8 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
       { id: "floor_plan", label: "Floor plan" },
       { id: "website", label: "Website" },
       { id: "social_reels", label: "Social reels" },
+      { id: "long_form", label: "YouTube / long-form video" },
+      { id: "monthly_content", label: "A monthly content rhythm" },
       { id: "twilight", label: "Twilight or virtual twilight" },
       { id: "neighborhood", label: "Neighborhood / lifestyle content" },
       { id: "recommend", label: "Not sure, recommend it for me" },
@@ -174,9 +175,8 @@ const PACKAGE_ICONS: Record<PackageId, keyof typeof iconMap> = {
   essentials: "home",
   signature: "film",
   premier: "sparkles",
-  casualScroller: "film",
-  contentPro: "film",
   influencer: "sparkles",
+  contentCreator: "film",
   landPackage: "map",
   lot: "map",
   locationPackage: "map",
@@ -198,17 +198,16 @@ const answerLabel = (questionId: QuestionId, value: string) => {
 
 const formatPrice = (price: number, isStarting = false) => `${isStarting ? "Starting at " : ""}$${price.toLocaleString()}`;
 
-export function getPackagePricing(packageConfig: PackageConfig, _size: SizeTier = "not_sure") {
-  const selectedVariant = packageConfig.variants[0];
-  if (!selectedVariant) throw new Error(`Missing Aryeo variant for ${packageConfig.name}`);
-  return { price: selectedVariant.price, photos: packageConfig.photoCount, isStarting: false };
+export function getPackagePricing(packageConfig: PackageConfig, size: SizeTier = "not_sure") {
+  const pricing = getPackagePricingForSize(packageConfig, size);
+  return { price: pricing.price, photos: pricing.photos, isStarting: pricing.isStarting };
 }
 
 const packageIncludesDrone = (packageId: PackageId) => [
   "signature",
   "premier",
-  "contentPro",
   "influencer",
+  "contentCreator",
   "landPackage",
   "lot",
   "locationPackage",
@@ -219,14 +218,13 @@ const packageIncludesVideo = (packageId: PackageId) => [
   "essentials",
   "signature",
   "premier",
-  "casualScroller",
-  "contentPro",
   "influencer",
+  "contentCreator",
   "landPackage",
   "preListing",
 ].includes(packageId);
 
-const packageIncludesTwilight = (packageId: PackageId) => ["essentials", "signature", "premier", "preListing"].includes(packageId);
+const packageIncludesTwilight = (packageId: PackageId) => ["essentials", "signature", "premier", "influencer", "contentCreator", "preListing"].includes(packageId);
 
 export function getRecommendation(answers: Answers): Recommendation {
   const propertyType = getSingleAnswer(answers, "propertyType");
@@ -239,16 +237,21 @@ export function getRecommendation(answers: Answers): Recommendation {
   let packageId: PackageId = "essentials";
   let reason = "This gives you a polished listing presence without overbuilding the production.";
 
-  if (propertyType === "land") {
+  if (goal === "long_form" || goal === "monthly_content" || needsSet.has("long_form") || needsSet.has("monthly_content")) {
+    packageId = "contentCreator";
+    reason = goal === "monthly_content" || needsSet.has("monthly_content")
+      ? "A monthly plan should start with the Content Creator framework, then tailor the cadence and deliverable mix around your channels and business goals."
+      : "Your goal is bigger than a single listing reel, so this builds a long-form YouTube story and a reusable bank of short-form content.";
+  } else if (propertyType === "land") {
     packageId = goal === "essentials_only" ? "lot" : goal === "polished" ? "locationPackage" : "landPackage";
     reason = "Land listings benefit from drone context, boundary graphics, and access imagery more than a standard interior-first package.";
   } else if (propertyType === "short_term_rental") {
     if (socialImportance === "major") {
       packageId = "influencer";
-      reason = "This live social package gives a premium rental strong listing coverage plus agent-led lifestyle content.";
+      reason = "This social package gives a premium rental strong listing coverage plus agent-led lifestyle content.";
     } else if (goal === "personal_brand" || socialImportance === "very") {
-      packageId = "contentPro";
-      reason = "This live social package combines polished listing coverage with higher-production short-form content.";
+      packageId = "influencer";
+      reason = "The Influencer combines polished property coverage with higher-production short-form content.";
     } else if (goal === "premium" || goal === "custom" || goal === "sell_fast") {
       packageId = "signature";
       reason = "Signature is the closest live Aryeo offering for a rental that needs photo, video, aerial, and 3D depth.";
@@ -257,7 +260,7 @@ export function getRecommendation(answers: Answers): Recommendation {
       reason = "Essentials keeps the rental presentation polished while letting you choose the most useful video, reel, or 3D enhancement.";
     } else {
       packageId = "starter";
-      reason = "No rental-only package is on the live form, so Starter is the closest current option for focused photo coverage.";
+      reason = "Starter keeps the rental coverage focused while still delivering a polished visual foundation.";
     }
   } else if (propertyType === "pre_listing") {
     packageId = goal === "essentials_only" ? "exteriorPhotos" : "preListing";
@@ -280,17 +283,17 @@ export function getRecommendation(answers: Answers): Recommendation {
     packageId = "premier";
     reason = "This gives the listing a fuller, more elevated media story with room for custom production needs.";
   } else if (goal === "personal_brand") {
-    packageId = socialImportance === "major" ? "influencer" : "contentPro";
+    packageId = "influencer";
     reason = "You are marketing both the property and your brand, so the recommendation centers social-ready video and agent-facing content.";
   }
 
   const highIntentNeeds = ["video", "drone", "website", "social_reels"].filter((need) => needsSet.has(need));
-  if (!["land", "short_term_rental", "pre_listing", "luxury"].includes(propertyType || "")) {
+  if (packageId !== "contentCreator" && !["land", "short_term_rental", "pre_listing", "luxury"].includes(propertyType || "")) {
     if (socialImportance === "major") {
       packageId = "influencer";
       reason = "Social is a major part of your strategy, so this package adds agent and lifestyle scenes to the listing campaign.";
     } else if (goal === "personal_brand" || socialImportance === "very") {
-      packageId = "contentPro";
+      packageId = "influencer";
       reason = "Your answers call for a listing package that consistently creates higher-production social content.";
     } else if (highIntentNeeds.length >= 4) {
       packageId = "premier";
@@ -303,10 +306,10 @@ export function getRecommendation(answers: Answers): Recommendation {
 
   const recommendedPackage = getPackage(packageId);
   const addOns: AddOnConfig[] = [];
-  if (recommendedPackage.category !== "social" && needsSet.has("social_reels")) {
-    if (socialImportance === "major") addOns.push(ADD_ONS.influencerReel);
-    else if (socialImportance === "very") addOns.push(ADD_ONS.contentSpecialist);
-    else addOns.push(ADD_ONS.classicReel);
+  if (!["brand", "creator"].includes(recommendedPackage.category) && needsSet.has("social_reels")) {
+    if (socialImportance === "major") addOns.push(ADD_ONS.influencerVideo);
+    else if (socialImportance === "very") addOns.push(ADD_ONS.luxeVideo);
+    else addOns.push(ADD_ONS.classicVideo);
   }
 
   if (needsSet.has("video") && !packageIncludesVideo(packageId)) addOns.push(ADD_ONS.classicVideo);
@@ -326,6 +329,7 @@ export function getRecommendation(answers: Answers): Recommendation {
     isStartingPrice: packagePricing.isStarting,
     photoCount: packagePricing.photos,
     sizeLabel: SIZE_LABELS[selectedSize],
+    sizeTier: selectedSize,
   };
 }
 
@@ -418,6 +422,7 @@ function Header({ showStartOver, onStartOver }: { showStartOver: boolean; onStar
         <NoWallsLogo className="h-auto w-36 shrink-0 text-black sm:w-44" />
         <div className="hidden h-8 w-px bg-black/10 sm:block" />
         <p className="hidden text-sm font-semibold uppercase tracking-[0.16em] text-[#828487] sm:block">Package Builder</p>
+        <span className="hidden rounded-full bg-[#111011] px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white md:inline-flex">Private preview</span>
       </div>
       {showStartOver && (
         <Button variant="ghost" className="h-10 px-3 text-sm" onClick={onStartOver}>
@@ -445,67 +450,83 @@ function NoWallsLogo({ className }: { className?: string }) {
 }
 
 function IntroScreen({ onStart }: { onStart: () => void }) {
-  const availablePackages = Object.values(PACKAGE_CONFIG.packages);
+  const availablePackages = FEATURED_PACKAGE_IDS.map((packageId) => PACKAGE_CONFIG.packages[packageId]);
+
+  const scrollToPricing = () => {
+    document.getElementById("pricing-preview")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
-    <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-      <div className="animate-fade-up">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#828487] shadow-sm">
-          <Sparkles className="h-4 w-4 text-black" />
-          Real Estate Marketing Done Differently
+    <div className="mx-auto w-full max-w-6xl">
+      <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="animate-fade-up">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#828487] shadow-sm">
+            <Sparkles className="h-4 w-4 text-black" />
+            Private September Pricing Concept
+          </div>
+          <h1 className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[#111011] sm:text-6xl lg:text-7xl">
+            Choose the outcome. We'll build the media plan.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-[#606266] sm:text-xl">
+            Tell us what the property needs and what you want the marketing to accomplish. We'll recommend the right package, coverage, and content direction.
+          </p>
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" onClick={onStart}>
+              Build my package
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button size="lg" variant="ghost" onClick={scrollToPricing}>
+              Preview new pricing
+            </Button>
+          </div>
+          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#606266]">
+            <span className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-[#111011]" /> Outcome-led recommendations</span>
+            <span className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-[#111011]" /> Square-footage pricing</span>
+            <span className="inline-flex items-center gap-2"><Check className="h-4 w-4 text-[#111011]" /> No live order changes</span>
+          </div>
         </div>
-        <h1 className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[#111011] sm:text-6xl lg:text-7xl">
-          Forget the pricing table. Build the right listing gameplan.
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-[#606266] sm:text-xl">
-          Answer a few quick questions and we'll recommend the package that fits the property, your goals, and the way you want buyers to feel.
-        </p>
-        <div className="mt-9 flex">
-          <Button size="lg" onClick={onStart}>
-            Build my package
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+
+        <div className="rounded-[2rem] border border-white bg-white p-4 shadow-soft-xl">
+          <div className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-[#111011] p-6 text-white">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.2em] text-white/55">New pricing preview</p>
+                <p className="mt-2 text-2xl font-semibold tracking-normal">One clear path for every goal</p>
+              </div>
+              <img src={NO_WALLS_FAVICON_URL} alt="" className="h-8 w-8 rounded-lg bg-white" />
+            </div>
+
+            <div className="mt-6 h-[430px] overflow-hidden sm:h-[470px]">
+              <div className="package-scroll-track flex flex-col gap-3">
+                {[0, 1].map((setIndex) => (
+                  <div key={setIndex} className="grid gap-3" aria-hidden={setIndex === 1}>
+                    {availablePackages.map((packageItem) => {
+                      const pricing = getPackagePricing(packageItem);
+                      return (
+                        <div
+                          key={`${setIndex}-${packageItem.id}`}
+                          className="flex h-[88px] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">{packageItem.category.replace("-", " ")}</p>
+                            <p className="mt-1 text-lg font-semibold leading-6 tracking-normal text-white">{packageItem.name}</p>
+                          </div>
+                          <div className="shrink-0 text-right">
+                            <p className="text-xs text-white/45">Starting at</p>
+                            <p className="mt-1 text-lg font-semibold">${pricing.price.toLocaleString()}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-[2rem] border border-white bg-white p-4 shadow-soft-xl">
-        <div className="overflow-hidden rounded-[1.5rem] border border-black/10 bg-[#111011] p-6 text-white">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-white/55">Available packages</p>
-              <p className="mt-2 text-2xl font-semibold tracking-normal">A fit for every listing</p>
-            </div>
-            <img src={NO_WALLS_FAVICON_URL} alt="" className="h-8 w-8 rounded-lg bg-white" />
-          </div>
-
-          <div className="mt-6 h-[430px] overflow-hidden sm:h-[470px]">
-            <div className="package-scroll-track flex flex-col gap-3">
-              {[0, 1].map((setIndex) => (
-                <div key={setIndex} className="grid gap-3" aria-hidden={setIndex === 1}>
-                  {availablePackages.map((packageItem) => {
-                    const pricing = getPackagePricing(packageItem);
-                    return (
-                      <div
-                        key={`${setIndex}-${packageItem.id}`}
-                        className="flex h-[88px] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">{packageItem.category.replace("-", " ")}</p>
-                          <p className="mt-1 text-lg font-semibold leading-6 tracking-normal text-white">{packageItem.name}</p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className="text-xs text-white/45">{pricing.isStarting ? "Starting at" : "Package"}</p>
-                          <p className="mt-1 text-lg font-semibold">${pricing.price.toLocaleString()}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      <PricingOverview onBuild={onStart} />
     </div>
   );
 }
@@ -702,15 +723,17 @@ function RecommendationScreen({
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" variant="gold" onClick={openBookingForm} aria-expanded={bookingOpen} aria-controls="booking-request">
-              <CircleDollarSign className="h-4 w-4" />
-              Book this package
+              {PRICING_REVIEW_ONLY ? <Check className="h-4 w-4" /> : <CircleDollarSign className="h-4 w-4" />}
+              {PRICING_REVIEW_ONLY ? "Review this recommendation" : "Book this package"}
             </Button>
             <Button size="lg" variant="ghostDark" onClick={onStartOver}>
               Start over
             </Button>
           </div>
 
-          {bookingOpen && <BookingRequestForm recommendation={recommendation} />}
+          {bookingOpen && (PRICING_REVIEW_ONLY
+            ? <ReviewOnlyPanel recommendation={recommendation} />
+            : <BookingRequestForm recommendation={recommendation} />)}
         </div>
       </div>
 
@@ -719,16 +742,44 @@ function RecommendationScreen({
         <ChooseForMeCard onChoose={openBookingForm} />
         <PackageComparison />
         <p className="px-1 text-xs leading-5 text-[#828487]">
-          Prices match the production NW Order Now catalog reviewed {ARYEO_CATALOG_REVIEWED_AT}. Aryeo confirms availability, selected options, and the final total.
+          September pricing concept reviewed {PRICING_CATALOG_REVIEWED_AT}. This private prototype does not change or submit to the production order form.
         </p>
       </aside>
     </div>
   );
 }
 
+function ReviewOnlyPanel({ recommendation }: { recommendation: Recommendation }) {
+  return (
+    <div id="booking-request" className="mt-8 border-t border-white/12 pt-8" role="status">
+      <div className="flex items-start gap-4 rounded-2xl border border-white/15 bg-white/[0.08] p-5 sm:p-6">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#111011]">
+          <ShieldCheck className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/45">Review-only concept</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-normal">The recommendation is ready for pricing review.</h3>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/68">
+            No Aryeo session is created from this preview. After the pricing, package names, and video structure are approved, this selection can be connected to the private prototype form for end-to-end testing.
+          </p>
+          <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/40">Recommended direction</p>
+            <p className="mt-2 font-semibold">{recommendation.package.name}</p>
+            <p className="mt-1 text-sm text-white/55">
+              {formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice)} · {recommendation.photoCount || recommendation.sizeLabel}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BookingRequestForm({ recommendation }: { recommendation: Recommendation }) {
   const packagePrice = formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice);
-  const defaultVariant = getDefaultCatalogVariant(recommendation.package.id);
+  const defaultVariant = recommendation.package.pricingMode === "square-footage"
+    ? recommendation.package.variants.find((variant) => variant.key === recommendation.sizeTier) || getDefaultCatalogVariant(recommendation.package.id)
+    : getDefaultCatalogVariant(recommendation.package.id);
   const [selectedVariantKey, setSelectedVariantKey] = useState(defaultVariant.key);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<BookingSessionResult | null>(null);
@@ -964,7 +1015,9 @@ function RecommendedAddOns({ addOns }: { addOns: AddOnConfig[] }) {
                   </p>
                 </div>
                 <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#111011]">
-                  ${addOn.price.toLocaleString()}{addOn.priceSuffix || ""}
+                  {addOn.price !== undefined
+                    ? `$${addOn.price.toLocaleString()}${addOn.priceSuffix || ""}`
+                    : addOn.priceLabel || "Price pending"}
                 </span>
               </div>
             </div>
@@ -1006,10 +1059,14 @@ function SummaryPanel({ answers, onEdit }: { answers: Answers; onEdit: (question
 function ChooseForMeCard({ onChoose }: { onChoose: () => void }) {
   return (
     <div className="rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-      <p className="text-base font-semibold text-[#111011]">Want us to choose for you?</p>
-      <p className="mt-2 text-sm leading-6 text-[#606266]">Start with this recommendation and confirm the final service details in Aryeo.</p>
+      <p className="text-base font-semibold text-[#111011]">{PRICING_REVIEW_ONLY ? "Ready to review the direction?" : "Want us to choose for you?"}</p>
+      <p className="mt-2 text-sm leading-6 text-[#606266]">
+        {PRICING_REVIEW_ONLY
+          ? "See exactly what will be carried into the private Aryeo test after pricing approval."
+          : "Start with this recommendation and confirm the final service details in Aryeo."}
+      </p>
       <Button className="mt-4 w-full" onClick={onChoose}>
-        Start booking details
+        {PRICING_REVIEW_ONLY ? "Review handoff plan" : "Start booking details"}
       </Button>
     </div>
   );
