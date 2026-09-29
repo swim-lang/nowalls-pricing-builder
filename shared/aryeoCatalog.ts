@@ -1,4 +1,4 @@
-export const PRICING_CATALOG_REVIEWED_AT = "2026-09-21";
+export const PRICING_CATALOG_REVIEWED_AT = "2026-09-29";
 export const PRICING_REVIEW_ONLY = true;
 
 // This is the private prototype form. Brian's restored production form is intentionally
@@ -38,7 +38,6 @@ export type PackageId =
   | "landPackage"
   | "lot"
   | "locationPackage"
-  | "preListing"
   | "exteriorPhotos";
 
 export type PackageCategory = "core" | "brand" | "creator" | "land" | "pre-listing";
@@ -76,6 +75,13 @@ export type AddOnConfig = {
   priceLabel?: string;
   priceSuffix?: string;
   aryeoType: "MAIN" | "ADDON";
+};
+
+export type PhotoOnlyOption = {
+  id: string;
+  photoCount: string;
+  sizeLabel?: string;
+  price: number;
 };
 
 const variant = (
@@ -263,41 +269,29 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
       id: "lot",
       name: "The Lot",
       aryeoProductTitle: "Pre Listing Packages",
-      purpose: "A compact photo package for a straightforward lot listing.",
-      bestFor: "Lots that need clean ground and aerial coverage",
-      category: "land",
+      purpose: "A compact pre-listing package that adds aerial context before the full launch.",
+      bestFor: "Coming-soon properties that need exterior and drone coverage",
+      category: "pre-listing",
       pricingMode: "fixed",
-      includes: ["Up to 10 exterior photos", "Up to 10 drone photos"],
+      includes: ["Up to 10 exterior photos", "Up to 10 drone photos", "Agent-branded property website"],
       photoCount: "Up to 20 photos",
-      variants: [variant("the-lot", "The Lot", 179, 40)],
+      variants: [variant("the-lot", "The Lot", 209, 40)],
     },
     locationPackage: {
       id: "locationPackage",
       name: "Location Package",
       aryeoProductTitle: "Pre Listing Packages",
-      purpose: "A land package that adds neighborhood and lifestyle context.",
-      bestFor: "Location-driven lots where the surrounding area helps sell the story",
-      category: "land",
-      pricingMode: "fixed",
-      includes: ["Up to 10 exterior photos", "Up to 10 drone photos", "Neighborhood and lifestyle photos"],
-      variants: [variant("location-package", "Location Package", 249, 60)],
-    },
-    preListing: {
-      id: "preListing",
-      name: "The Pre Listing Package",
-      aryeoProductTitle: "Pre Listing Packages",
-      purpose: "A complete exterior-first package for a coming-soon launch.",
-      bestFor: "Capturing a property's exterior at its best before the full listing launch",
+      purpose: "A pre-listing package that adds neighborhood and lifestyle context.",
+      bestFor: "Coming-soon properties where the surrounding area helps sell the story",
       category: "pre-listing",
       pricingMode: "fixed",
       includes: [
         "Up to 10 exterior photos",
         "Up to 10 drone photos",
         "Neighborhood and lifestyle photos",
-        "Exterior ground and drone video clips",
-        "Virtual twilight",
+        "Agent-branded property website",
       ],
-      variants: [variant("pre-listing-package", "The Pre Listing Package", 349, 120)],
+      variants: [variant("location-package", "Location Package", 289, 60)],
     },
     exteriorPhotos: {
       id: "exteriorPhotos",
@@ -314,29 +308,47 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
   },
 };
 
+export const PHOTO_ONLY_OPTIONS: PhotoOnlyOption[] = [
+  { id: "photos-20", photoCount: "20 stills", sizeLabel: "0–1,000 sq ft", price: 149 },
+  { id: "photos-25", photoCount: "25 stills", sizeLabel: "1,000–2,500 sq ft", price: 169 },
+  { id: "photos-30", photoCount: "30 stills", sizeLabel: "2,100–3,000 sq ft", price: 194 },
+  { id: "photos-35", photoCount: "35 stills", sizeLabel: "3,000–4,000 sq ft", price: 219 },
+  { id: "photos-40", photoCount: "40 stills", sizeLabel: "5,000+ sq ft", price: 239 },
+  { id: "photos-45", photoCount: "45 stills", price: 259 },
+  { id: "photos-50", photoCount: "50 stills", price: 289 },
+];
+
 export const ADD_ONS = {
   classicVideo: {
     id: "classicVideo",
     name: "Classic Video",
     aryeoProductTitle: "Video À la carte",
-    purpose: "Choose a clean horizontal walkthrough or vertical reel.",
-    priceLabel: "Final price pending",
+    purpose: "A standard walkthrough video or reel in horizontal or vertical format.",
+    price: 249,
     aryeoType: "MAIN",
   },
-  luxeVideo: {
-    id: "luxeVideo",
-    name: "Luxe Video",
+  cinematicVideo: {
+    id: "cinematicVideo",
+    name: "Cinematic Video",
     aryeoProductTitle: "Video À la carte",
-    purpose: "Choose horizontal or vertical with upgraded effects, transitions, and drone clips.",
-    priceLabel: "Final price pending",
+    purpose: "Drone clips, trendy moves, and an elevated edit in horizontal or vertical format.",
+    price: 349,
     aryeoType: "MAIN",
   },
   influencerVideo: {
     id: "influencerVideo",
     name: "Influencer Video",
     aryeoProductTitle: "Video À la carte",
-    purpose: "Choose horizontal or vertical with agent, neighborhood, and lifestyle scenes.",
-    priceLabel: "Final price pending",
+    purpose: "Agent scenes, drone clips, and trend-led pacing in horizontal or vertical format.",
+    price: 449,
+    aryeoType: "MAIN",
+  },
+  lifestyleVideo: {
+    id: "lifestyleVideo",
+    name: "Lifestyle Video",
+    aryeoProductTitle: "Video À la carte",
+    purpose: "A story-led production for showing more than the home itself.",
+    price: 595,
     aryeoType: "MAIN",
   },
   luxeBoost: {

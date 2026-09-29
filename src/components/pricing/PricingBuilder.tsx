@@ -39,7 +39,7 @@ import {
 } from "../../lib/aryeoBooking";
 import PricingOverview from "./PricingOverview";
 
-export { PACKAGE_CONFIG };
+export { ADD_ONS, PACKAGE_CONFIG, PHOTO_ONLY_OPTIONS } from "../../../shared/aryeoCatalog";
 
 type QuestionId = "propertyType" | "goal" | "socialImportance" | "size" | "knownNeeds";
 
@@ -180,7 +180,6 @@ const PACKAGE_ICONS: Record<PackageId, keyof typeof iconMap> = {
   landPackage: "map",
   lot: "map",
   locationPackage: "map",
-  preListing: "layers",
   exteriorPhotos: "image",
 };
 
@@ -211,7 +210,6 @@ const packageIncludesDrone = (packageId: PackageId) => [
   "landPackage",
   "lot",
   "locationPackage",
-  "preListing",
 ].includes(packageId);
 
 const packageIncludesVideo = (packageId: PackageId) => [
@@ -221,10 +219,9 @@ const packageIncludesVideo = (packageId: PackageId) => [
   "influencer",
   "contentCreator",
   "landPackage",
-  "preListing",
 ].includes(packageId);
 
-const packageIncludesTwilight = (packageId: PackageId) => ["essentials", "signature", "premier", "influencer", "contentCreator", "preListing"].includes(packageId);
+const packageIncludesTwilight = (packageId: PackageId) => ["essentials", "signature", "premier", "influencer", "contentCreator"].includes(packageId);
 
 export function getRecommendation(answers: Answers): Recommendation {
   const propertyType = getSingleAnswer(answers, "propertyType");
@@ -263,10 +260,12 @@ export function getRecommendation(answers: Answers): Recommendation {
       reason = "Starter keeps the rental coverage focused while still delivering a polished visual foundation.";
     }
   } else if (propertyType === "pre_listing") {
-    packageId = goal === "essentials_only" ? "exteriorPhotos" : "preListing";
-    reason = goal === "essentials_only"
-      ? "Exterior Photos is the focused live option for a simple coming-soon preview."
-      : "The Pre Listing Package gives you broad exterior, aerial, neighborhood, video, and twilight coverage before the full launch.";
+    packageId = goal === "essentials_only" ? "exteriorPhotos" : goal === "polished" ? "lot" : "locationPackage";
+    reason = packageId === "exteriorPhotos"
+      ? "Exterior Photos is the focused option for a simple coming-soon preview."
+      : packageId === "lot"
+        ? "The Lot adds aerial context to the exterior coverage before the full listing launch."
+        : "The Location Package adds neighborhood and lifestyle context to the exterior and drone coverage.";
   } else if (propertyType === "luxury") {
     packageId = "premier";
     reason = "A higher-value listing needs a premium presentation with video, social assets, twilight, and lifestyle context.";
@@ -308,7 +307,7 @@ export function getRecommendation(answers: Answers): Recommendation {
   const addOns: AddOnConfig[] = [];
   if (!["brand", "creator"].includes(recommendedPackage.category) && needsSet.has("social_reels")) {
     if (socialImportance === "major") addOns.push(ADD_ONS.influencerVideo);
-    else if (socialImportance === "very") addOns.push(ADD_ONS.luxeVideo);
+    else if (socialImportance === "very") addOns.push(ADD_ONS.cinematicVideo);
     else addOns.push(ADD_ONS.classicVideo);
   }
 

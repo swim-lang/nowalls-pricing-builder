@@ -4,8 +4,9 @@ A private, review-only recommendation concept for No Walls' September 2026 prici
 
 ## Current review phase
 
-- Package names, square-footage tiers, photo counts, Creator tiers, and package add-ons mirror Brian's September v2 pricing supplied on September 21, 2026.
-- The simplified video presentation shows Classic, Luxe, and Influencer levels with horizontal or vertical formats. À-la-carte video prices remain visibly pending until Brian confirms them.
+- Package names, square-footage tiers, photo counts, Creator tiers, and package add-ons mirror Brian's September v2 pricing, rechecked on September 29, 2026.
+- The à-la-carte section now includes Brian's photo-only matrix plus Classic ($249), Cinematic ($349), Influencer ($449), and Lifestyle ($595) video options.
+- Brian's latest Notion page contains a Pre Listing Packages heading but no package rows. The review UI therefore preserves the three prices currently published on the live No Walls pricing page and labels them for confirmation.
 - The UI is intentionally review-only. It does not collect customer details, create Aryeo sessions, or change the restored production order form.
 - The Vercel endpoint also rejects session creation while `PRICING_REVIEW_ONLY` is enabled in `shared/aryeoCatalog.ts`.
 - The project retains the tested Aryeo session implementation for a later, explicitly approved connection phase.

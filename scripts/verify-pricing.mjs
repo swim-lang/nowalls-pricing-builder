@@ -18,7 +18,7 @@ try {
     logLevel: "silent",
   });
 
-  const { getRecommendation, PACKAGE_CONFIG } = await import(pathToFileURL(bundlePath).href);
+  const { ADD_ONS, PHOTO_ONLY_OPTIONS, getRecommendation, PACKAGE_CONFIG } = await import(pathToFileURL(bundlePath).href);
 
   const packageExpectations = {
     starter: { price: 195, variants: 7 },
@@ -28,9 +28,8 @@ try {
     influencer: { price: 609, variants: 7 },
     contentCreator: { price: 1295, variants: 3 },
     landPackage: { price: 495, variants: 1 },
-    lot: { price: 179, variants: 1 },
-    locationPackage: { price: 249, variants: 1 },
-    preListing: { price: 349, variants: 1 },
+    lot: { price: 209, variants: 1 },
+    locationPackage: { price: 289, variants: 1 },
     exteriorPhotos: { price: 89, variants: 1 },
   };
 
@@ -48,6 +47,11 @@ try {
   assert.deepEqual(PACKAGE_CONFIG.packages.premier.variants.map((item) => item.price), [990, 1025, 1060, 1095, 1130, 1165, 1200]);
   assert.deepEqual(PACKAGE_CONFIG.packages.influencer.variants.map((item) => item.price), [609, 644, 679, 714, 749, 784, 819]);
   assert.deepEqual(PACKAGE_CONFIG.packages.contentCreator.variants.map((item) => item.price), [1295, 1595, 1795]);
+  assert.deepEqual(PHOTO_ONLY_OPTIONS.map((item) => item.price), [149, 169, 194, 219, 239, 259, 289]);
+  assert.deepEqual(
+    [ADD_ONS.classicVideo.price, ADD_ONS.cinematicVideo.price, ADD_ONS.influencerVideo.price, ADD_ONS.lifestyleVideo.price],
+    [249, 349, 449, 595],
+  );
 
   const expectRecommendation = (answers, expectedPackage, expectedPrice, expectedPhotos, expectedStarting = false) => {
     const result = getRecommendation(answers);
@@ -110,7 +114,7 @@ try {
   expectRecommendation(
     { propertyType: "land", goal: "essentials_only", socialImportance: "not_important", size: "not_sure", knownNeeds: ["photos", "drone"] },
     "lot",
-    179,
+    209,
     "Up to 20 photos",
   );
 
@@ -123,8 +127,8 @@ try {
 
   expectRecommendation(
     { propertyType: "pre_listing", goal: "polished", socialImportance: "somewhat", size: "not_sure", knownNeeds: ["photos", "video"] },
-    "preListing",
-    349,
+    "lot",
+    209,
   );
 
   console.log("No Walls September pricing tiers and review-mode recommendations verified.");
