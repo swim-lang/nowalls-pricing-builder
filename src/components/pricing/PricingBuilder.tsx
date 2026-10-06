@@ -510,7 +510,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
             Private Pricing Review
           </div>
           <h1 className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[#111011] sm:text-6xl lg:text-7xl">
-            Choose the outcome. We'll build the media plan.
+            Build the right listing package for your property.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-[#606266] sm:text-xl">
             Tell us what the property needs and what you want the marketing to accomplish. We'll recommend the right package, coverage, and content direction.
