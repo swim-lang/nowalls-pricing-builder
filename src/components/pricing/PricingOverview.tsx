@@ -64,6 +64,9 @@ export default function PricingOverview({ onBuild }: { onBuild: () => void }) {
 
   const influencer = PACKAGE_CONFIG.packages.influencer;
   const creator = PACKAGE_CONFIG.packages.contentCreator;
+  const creatorSharedInclusions = creator.includes.filter((item) => (
+    !item.startsWith("One ") && !item.startsWith("Two to ")
+  ));
   const influencerPricing = getPackagePricingForSize(influencer, selectedSize);
 
   return (
@@ -72,7 +75,7 @@ export default function PricingOverview({ onBuild }: { onBuild: () => void }) {
         <div className="rounded-[1.5rem] border border-black/10 bg-[#fafafa] p-5 sm:p-8 lg:p-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#828487]">September pricing concept</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#828487]">Confirmed pricing structure</p>
               <h2 className="mt-3 text-4xl font-semibold leading-tight tracking-normal sm:text-5xl">
                 Start with the property. Scale the coverage with it.
               </h2>
@@ -169,7 +172,7 @@ export default function PricingOverview({ onBuild }: { onBuild: () => void }) {
         <article className="rounded-[2rem] bg-[#111011] p-7 text-white shadow-[0_28px_90px_rgba(0,0,0,0.2)] sm:p-9">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
             <div className="max-w-xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">YouTube + content engine</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">Complete listing + content campaign</p>
               <h2 className="mt-3 text-4xl font-semibold tracking-normal">Content Creator</h2>
               <p className="mt-4 text-base leading-7 text-white/65">{creator.purpose}</p>
             </div>
@@ -177,6 +180,18 @@ export default function PricingOverview({ onBuild }: { onBuild: () => void }) {
               <Youtube className="h-5 w-5" aria-hidden="true" />
             </div>
           </div>
+          <div className="mt-7 rounded-2xl border border-white/12 bg-white/[0.07] p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">Every tier includes</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {creatorSharedInclusions.map((item) => (
+                <div key={item} className="flex items-start gap-2 text-sm leading-6 text-white/72">
+                  <Check className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-7 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">Choose the video + reel count</p>
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             {creator.variants.map((tier) => (
               <div key={tier.key} className="rounded-2xl border border-white/12 bg-white/[0.07] p-5">
@@ -222,7 +237,7 @@ export default function PricingOverview({ onBuild }: { onBuild: () => void }) {
             </div>
 
             <p className="mt-5 rounded-2xl bg-[#f0f0f0] px-4 py-3 text-xs leading-5 text-[#606266]">
-              Review note: Brian's latest Notion page names this section but does not list its rows. These three prices mirror the current live No Walls pricing page and should be confirmed if they changed.
+              Confirmed pre-listing options: Exterior Photos at $89, The Lot at $209, and Location Package at $289.
             </p>
           </div>
         </article>
@@ -244,7 +259,7 @@ export default function PricingOverview({ onBuild }: { onBuild: () => void }) {
               <div key={option.id} className="flex items-center justify-between gap-4 py-3.5">
                 <div>
                   <p className="text-sm font-semibold capitalize">{option.photoCount}</p>
-                  <p className="mt-0.5 text-xs text-white/42">{option.sizeLabel || "No size range listed"}</p>
+                  <p className="mt-0.5 text-xs text-white/42">{option.sizeLabel}</p>
                 </div>
                 <p className="text-lg font-semibold">{formatPrice(option.price)}</p>
               </div>

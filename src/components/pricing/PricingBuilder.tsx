@@ -3,6 +3,7 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
+  CalendarDays,
   Check,
   ChevronDown,
   CircleDollarSign,
@@ -59,7 +60,8 @@ type QuestionConfig = {
 
 type Answers = Partial<Record<QuestionId, string | string[]>>;
 
-type Recommendation = {
+type PackageRecommendation = {
+  kind: "package";
   package: PackageConfig;
   reason: string;
   addOns: AddOnConfig[];
@@ -69,6 +71,18 @@ type Recommendation = {
   sizeLabel: string;
   sizeTier: SizeTier;
 };
+
+type MonthlyContentRecommendation = {
+  kind: "monthly-content";
+  title: string;
+  reason: string;
+  bestFor: string;
+  includes: string[];
+  priceLabel: string;
+  serviceLabel: string;
+};
+
+type Recommendation = PackageRecommendation | MonthlyContentRecommendation;
 
 const cx = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(" ");
 const NO_WALLS_FAVICON_URL = "https://framerusercontent.com/images/LPlC9tqmKBjfv4PD9XJCmiZDn9s.png";
@@ -117,7 +131,7 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
       { id: "sell_fast", label: "I need to sell this fast", hint: "More media depth to help the listing move." },
       { id: "premium", label: "I want this listing to feel premium", hint: "A higher-touch presentation for a stronger first impression." },
       { id: "personal_brand", label: "I want content that also builds my personal brand", hint: "Listing media plus agent-facing social assets." },
-      { id: "long_form", label: "I want to build a YouTube and long-form content presence", hint: "One production day that creates a larger bank of brand content." },
+      { id: "long_form", label: "I want a YouTube-led listing campaign", hint: "Complete listing coverage plus long-form video and a bank of social content." },
       { id: "monthly_content", label: "I need a consistent monthly content plan", hint: "A custom cadence built around your channels and business goals." },
       { id: "custom", label: "I want something more custom", hint: "A flexible recommendation with room to tailor production." },
     ],
@@ -142,7 +156,7 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
       { id: "1001_2000", label: "1,001 to 2,000 sq ft", hint: "Small to mid-size property." },
       { id: "2001_3000", label: "2,001 to 3,000 sq ft", hint: "Mid-size listing." },
       { id: "3001_4000", label: "3,001 to 4,000 sq ft", hint: "Larger property." },
-      { id: "4000_6000", label: "4,000 to 6,000 sq ft", hint: "Large property with more coverage needs." },
+      { id: "4000_6000", label: "4,001 to 6,000 sq ft", hint: "Large property with more coverage needs." },
       { id: "6001_8000", label: "6,001 to 8,000 sq ft", hint: "Estate-scale property." },
       { id: "over_8000", label: "Over 8,000 sq ft", hint: "Maximum standard coverage tier." },
       { id: "not_sure", label: "Not sure", hint: "We'll keep the estimate flexible." },
@@ -161,7 +175,7 @@ export const QUESTION_CONFIG: QuestionConfig[] = [
       { id: "floor_plan", label: "Floor plan" },
       { id: "website", label: "Website" },
       { id: "social_reels", label: "Social reels" },
-      { id: "long_form", label: "YouTube / long-form video" },
+      { id: "long_form", label: "YouTube / long-form listing video" },
       { id: "monthly_content", label: "A monthly content rhythm" },
       { id: "twilight", label: "Twilight or virtual twilight" },
       { id: "neighborhood", label: "Neighborhood / lifestyle content" },
@@ -231,14 +245,30 @@ export function getRecommendation(answers: Answers): Recommendation {
   const knownNeeds = getMultiAnswer(answers, "knownNeeds");
   const needsSet = new Set(knownNeeds);
 
+  if (goal === "monthly_content" || needsSet.has("monthly_content")) {
+    return {
+      kind: "monthly-content",
+      title: "Monthly Content Sessions",
+      reason: "You are looking for an ongoing content rhythm rather than media for one property. This stays separate from the listing packages and starts with a short strategy conversation.",
+      bestFor: "Agents who want a repeatable monthly presence across their priority channels",
+      includes: [
+        "A strategy-led monthly cadence",
+        "Channel and audience planning",
+        "A tailored mix of horizontal and vertical content",
+        "Production-day and publishing rhythm planning",
+        "A custom scope and quote before scheduling",
+      ],
+      priceLabel: "Custom plan",
+      serviceLabel: "Separate non-listing service",
+    };
+  }
+
   let packageId: PackageId = "essentials";
   let reason = "This gives you a polished listing presence without overbuilding the production.";
 
-  if (goal === "long_form" || goal === "monthly_content" || needsSet.has("long_form") || needsSet.has("monthly_content")) {
+  if (goal === "long_form" || needsSet.has("long_form")) {
     packageId = "contentCreator";
-    reason = goal === "monthly_content" || needsSet.has("monthly_content")
-      ? "A monthly plan should start with the Content Creator framework, then tailor the cadence and deliverable mix around your channels and business goals."
-      : "Your goal is bigger than a single listing reel, so this builds a long-form YouTube story and a reusable bank of short-form content.";
+    reason = "This listing needs more than a single reel, so Content Creator combines complete listing coverage with a long-form YouTube story and a reusable bank of short-form content.";
   } else if (propertyType === "land") {
     packageId = goal === "essentials_only" ? "lot" : goal === "polished" ? "locationPackage" : "landPackage";
     reason = "Land listings benefit from drone context, boundary graphics, and access imagery more than a standard interior-first package.";
@@ -321,6 +351,7 @@ export function getRecommendation(answers: Answers): Recommendation {
   const packagePricing = getPackagePricing(recommendedPackage, selectedSize);
 
   return {
+    kind: "package",
     package: recommendedPackage,
     reason,
     addOns: dedupeAddOns(addOns),
@@ -355,9 +386,24 @@ export default function PricingBuilder() {
 
   const recommendation = useMemo(() => getRecommendation(answers), [answers]);
 
+  const scrollToTop = () => {
+    window.setTimeout(() => window.scrollTo({ top: 0 }), 0);
+  };
+
+  const startBuilder = () => {
+    setStepIndex(0);
+    scrollToTop();
+  };
+
   const startOver = () => {
     setAnswers({});
     setStepIndex(-1);
+    scrollToTop();
+  };
+
+  const editAnswer = (questionId: QuestionId) => {
+    setStepIndex(QUESTION_CONFIG.findIndex((question) => question.id === questionId));
+    scrollToTop();
   };
 
   const updateAnswer = (questionId: QuestionId, value: string | string[]) => {
@@ -372,7 +418,7 @@ export default function PricingBuilder() {
 
         <main className="flex flex-1 items-center py-8 sm:py-12">
           <div className="w-full">
-            {isIntro && <IntroScreen onStart={() => setStepIndex(0)} />}
+            {isIntro && <IntroScreen onStart={startBuilder} />}
 
             {!isIntro && !isRecommendation && currentQuestion && (
               <div className="mx-auto max-w-4xl animate-fade-up">
@@ -404,7 +450,7 @@ export default function PricingBuilder() {
                 answers={answers}
                 recommendation={recommendation}
                 onStartOver={startOver}
-                onEdit={(questionId) => setStepIndex(QUESTION_CONFIG.findIndex((question) => question.id === questionId))}
+                onEdit={editAnswer}
               />
             )}
           </div>
@@ -461,7 +507,7 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
         <div className="animate-fade-up">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-semibold uppercase tracking-[0.12em] text-[#828487] shadow-sm">
             <Sparkles className="h-4 w-4 text-black" />
-            Private September Pricing Concept
+            Private Pricing Review
           </div>
           <h1 className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-normal text-[#111011] sm:text-6xl lg:text-7xl">
             Choose the outcome. We'll build the media plan.
@@ -686,7 +732,18 @@ function RecommendationScreen({
   onStartOver: () => void;
   onEdit: (questionId: QuestionId) => void;
 }) {
-  const Icon = iconMap[PACKAGE_ICONS[recommendation.package.id]];
+  const isMonthlyContent = recommendation.kind === "monthly-content";
+  const Icon = isMonthlyContent ? CalendarDays : iconMap[PACKAGE_ICONS[recommendation.package.id]];
+  const title = isMonthlyContent ? recommendation.title : recommendation.package.name;
+  const bestFor = isMonthlyContent ? recommendation.bestFor : recommendation.package.bestFor;
+  const price = isMonthlyContent
+    ? recommendation.priceLabel
+    : formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice);
+  const coverage = isMonthlyContent
+    ? recommendation.serviceLabel
+    : recommendation.photoCount || recommendation.sizeLabel;
+  const inclusions = isMonthlyContent ? recommendation.includes : recommendation.package.includes;
+  const addOns = isMonthlyContent ? [] : recommendation.addOns;
   const [bookingOpen, setBookingOpen] = useState(false);
 
   const openBookingForm = () => {
@@ -700,8 +757,10 @@ function RecommendationScreen({
         <div className="rounded-[1.5rem] bg-[#111011] p-6 text-white sm:p-8 lg:p-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#d6dbdc]">Your Recommended Package</p>
-              <h2 className="mt-4 text-5xl font-semibold leading-none tracking-normal sm:text-6xl">{recommendation.package.name}</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#d6dbdc]">
+                {isMonthlyContent ? "Your Recommended Direction" : "Your Recommended Package"}
+              </p>
+              <h2 className="mt-4 text-5xl font-semibold leading-none tracking-normal sm:text-6xl">{title}</h2>
               <p className="mt-4 max-w-2xl text-lg leading-8 text-white/72">{recommendation.reason}</p>
             </div>
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white text-[#111011]">
@@ -710,45 +769,82 @@ function RecommendationScreen({
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
-            <InfoTile label="Best for" value={recommendation.package.bestFor} />
-            <InfoTile label="Package price" value={formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice)} featured />
-            <InfoTile label={recommendation.photoCount ? "Photo coverage" : "Property size"} value={recommendation.photoCount || recommendation.sizeLabel} />
+            <InfoTile label="Best for" value={bestFor} />
+            <InfoTile label={isMonthlyContent ? "Pricing" : "Package price"} value={price} featured />
+            <InfoTile
+              label={isMonthlyContent ? "Service type" : recommendation.photoCount ? "Photo coverage" : "Property size"}
+              value={coverage}
+            />
           </div>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.85fr]">
-            <IncludedServices services={recommendation.package.includes} />
-            <RecommendedAddOns addOns={recommendation.addOns} />
+            <IncludedServices services={inclusions} />
+            <RecommendedAddOns
+              addOns={addOns}
+              title={isMonthlyContent ? "How pricing works" : "Recommended options"}
+              emptyMessage={isMonthlyContent
+                ? "Cadence, channels, production days, and the deliverable mix are set in a short strategy conversation before a custom quote."
+                : undefined}
+            />
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button size="lg" variant="gold" onClick={openBookingForm} aria-expanded={bookingOpen} aria-controls="booking-request">
               {PRICING_REVIEW_ONLY ? <Check className="h-4 w-4" /> : <CircleDollarSign className="h-4 w-4" />}
-              {PRICING_REVIEW_ONLY ? "Review this recommendation" : "Book this package"}
+              {isMonthlyContent
+                ? "Review monthly direction"
+                : PRICING_REVIEW_ONLY ? "Review this recommendation" : "Book this package"}
             </Button>
             <Button size="lg" variant="ghostDark" onClick={onStartOver}>
               Start over
             </Button>
           </div>
 
-          {bookingOpen && (PRICING_REVIEW_ONLY
-            ? <ReviewOnlyPanel recommendation={recommendation} />
-            : <BookingRequestForm recommendation={recommendation} />)}
+          {bookingOpen && (recommendation.kind === "monthly-content"
+            ? <MonthlyContentPanel recommendation={recommendation} />
+            : PRICING_REVIEW_ONLY
+              ? <ReviewOnlyPanel recommendation={recommendation} />
+              : <BookingRequestForm recommendation={recommendation} />)}
         </div>
       </div>
 
       <aside className="space-y-4">
         <SummaryPanel answers={answers} onEdit={onEdit} />
-        <ChooseForMeCard onChoose={openBookingForm} />
+        <ChooseForMeCard onChoose={openBookingForm} isMonthlyContent={isMonthlyContent} />
         <PackageComparison />
         <p className="px-1 text-xs leading-5 text-[#828487]">
-          September pricing concept reviewed {PRICING_CATALOG_REVIEWED_AT}. This private prototype does not change or submit to the production order form.
+          Pricing structure confirmed {PRICING_CATALOG_REVIEWED_AT}. This private prototype does not change or submit to the production order form.
         </p>
       </aside>
     </div>
   );
 }
 
-function ReviewOnlyPanel({ recommendation }: { recommendation: Recommendation }) {
+function MonthlyContentPanel({ recommendation }: { recommendation: MonthlyContentRecommendation }) {
+  return (
+    <div id="booking-request" className="mt-8 border-t border-white/12 pt-8" role="status">
+      <div className="flex items-start gap-4 rounded-2xl border border-white/15 bg-white/[0.08] p-5 sm:p-6">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#111011]">
+          <CalendarDays className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/45">Separate custom service</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-normal">Monthly content stays outside the listing order flow.</h3>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/68">
+            This recommendation does not create or preselect an Aryeo listing order. The cadence, channels, production plan, and price are set through a short strategy conversation.
+          </p>
+          <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/40">Recommended direction</p>
+            <p className="mt-2 font-semibold">{recommendation.title}</p>
+            <p className="mt-1 text-sm text-white/55">{recommendation.priceLabel} · {recommendation.serviceLabel}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewOnlyPanel({ recommendation }: { recommendation: PackageRecommendation }) {
   return (
     <div id="booking-request" className="mt-8 border-t border-white/12 pt-8" role="status">
       <div className="flex items-start gap-4 rounded-2xl border border-white/15 bg-white/[0.08] p-5 sm:p-6">
@@ -757,9 +853,9 @@ function ReviewOnlyPanel({ recommendation }: { recommendation: Recommendation })
         </span>
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-white/45">Review-only concept</p>
-          <h3 className="mt-2 text-2xl font-semibold tracking-normal">The recommendation is ready for pricing review.</h3>
+          <h3 className="mt-2 text-2xl font-semibold tracking-normal">The recommendation is ready for interface review.</h3>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/68">
-            No Aryeo session is created from this preview. After the pricing, package names, and video structure are approved, this selection can be connected to the private prototype form for end-to-end testing.
+            No Aryeo session is created from this preview. After the interface is approved, this selection can be connected to the private prototype form for end-to-end testing.
           </p>
           <div className="mt-5 rounded-xl border border-white/10 bg-black/20 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/40">Recommended direction</p>
@@ -774,7 +870,7 @@ function ReviewOnlyPanel({ recommendation }: { recommendation: Recommendation })
   );
 }
 
-function BookingRequestForm({ recommendation }: { recommendation: Recommendation }) {
+function BookingRequestForm({ recommendation }: { recommendation: PackageRecommendation }) {
   const packagePrice = formatPrice(recommendation.estimatedPrice, recommendation.isStartingPrice);
   const defaultVariant = recommendation.package.pricingMode === "square-footage"
     ? recommendation.package.variants.find((variant) => variant.key === recommendation.sizeTier) || getDefaultCatalogVariant(recommendation.package.id)
@@ -997,10 +1093,18 @@ function IncludedServices({ services }: { services: string[] }) {
   );
 }
 
-function RecommendedAddOns({ addOns }: { addOns: AddOnConfig[] }) {
+function RecommendedAddOns({
+  addOns,
+  title = "Recommended options",
+  emptyMessage = "No must-have extras based on your answers. This package should cover the core need.",
+}: {
+  addOns: AddOnConfig[];
+  title?: string;
+  emptyMessage?: string;
+}) {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/[0.06] p-5">
-      <h3 className="text-xl font-semibold tracking-normal">Recommended options</h3>
+      <h3 className="text-xl font-semibold tracking-normal">{title}</h3>
       <div className="mt-5 space-y-3">
         {addOns.length > 0 ? (
           addOns.map((addOn) => (
@@ -1022,7 +1126,7 @@ function RecommendedAddOns({ addOns }: { addOns: AddOnConfig[] }) {
             </div>
           ))
         ) : (
-          <p className="text-sm leading-6 text-white/64">No must-have extras based on your answers. This package should cover the core need.</p>
+          <p className="text-sm leading-6 text-white/64">{emptyMessage}</p>
         )}
       </div>
     </div>
@@ -1055,17 +1159,21 @@ function SummaryPanel({ answers, onEdit }: { answers: Answers; onEdit: (question
   );
 }
 
-function ChooseForMeCard({ onChoose }: { onChoose: () => void }) {
+function ChooseForMeCard({ onChoose, isMonthlyContent }: { onChoose: () => void; isMonthlyContent: boolean }) {
   return (
     <div className="rounded-[1.5rem] border border-black/10 bg-white p-5 shadow-[0_18px_60px_rgba(0,0,0,0.06)]">
-      <p className="text-base font-semibold text-[#111011]">{PRICING_REVIEW_ONLY ? "Ready to review the direction?" : "Want us to choose for you?"}</p>
+      <p className="text-base font-semibold text-[#111011]">
+        {isMonthlyContent ? "Ready to shape the monthly plan?" : PRICING_REVIEW_ONLY ? "Ready to review the direction?" : "Want us to choose for you?"}
+      </p>
       <p className="mt-2 text-sm leading-6 text-[#606266]">
-        {PRICING_REVIEW_ONLY
-          ? "See exactly what will be carried into the private Aryeo test after pricing approval."
+        {isMonthlyContent
+          ? "Monthly content remains a separate consultation and is never sent into the listing order form."
+          : PRICING_REVIEW_ONLY
+          ? "See exactly what will be carried into the private Aryeo test after interface approval."
           : "Start with this recommendation and confirm the final service details in Aryeo."}
       </p>
       <Button className="mt-4 w-full" onClick={onChoose}>
-        {PRICING_REVIEW_ONLY ? "Review handoff plan" : "Start booking details"}
+        {isMonthlyContent ? "Review monthly plan" : PRICING_REVIEW_ONLY ? "Review handoff plan" : "Start booking details"}
       </Button>
     </div>
   );

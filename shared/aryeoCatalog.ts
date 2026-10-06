@@ -1,8 +1,8 @@
-export const PRICING_CATALOG_REVIEWED_AT = "2026-09-29";
+export const PRICING_CATALOG_REVIEWED_AT = "2026-10-06";
 export const PRICING_REVIEW_ONLY = true;
 
 // This is the private prototype form. Brian's restored production form is intentionally
-// not referenced by this project while the September pricing concept is under review.
+// not referenced by this project while the confirmed pricing structure is under review.
 export const ARYEO_ORDER_FORM_ID = "019cabc9-1539-7102-892e-6368f97d965b";
 export const ARYEO_ORDER_FORM_URL = `https://nowalls.aryeo.com/order-forms/${ARYEO_ORDER_FORM_ID}`;
 
@@ -80,7 +80,7 @@ export type AddOnConfig = {
 export type PhotoOnlyOption = {
   id: string;
   photoCount: string;
-  sizeLabel?: string;
+  sizeLabel: string;
   price: number;
 };
 
@@ -226,8 +226,8 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
       id: "contentCreator",
       name: "Content Creator",
       aryeoProductTitle: "Content Creator Package",
-      purpose: "Turn one production session into a long-form story and a bank of social content.",
-      bestFor: "Agents building a YouTube presence and a consistent personal-brand content engine",
+      purpose: "A complete listing package that turns one property into a long-form story and a bank of social content.",
+      bestFor: "Listings that need complete media coverage plus a YouTube-led campaign",
       category: "creator",
       pricingMode: "tiered",
       includes: [
@@ -235,7 +235,7 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
         "One 5–10 minute horizontal YouTube video",
         "Two to six vertical reels, based on tier",
         "Neighborhood and lifestyle scenes",
-        "Up to 10 aerial photos + B-roll clips",
+        "Up to 10 aerial photos + video",
         "2D floor plan",
         "Virtual twilight",
         "Agent-branded property website + marketing kit",
@@ -310,12 +310,12 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
 
 export const PHOTO_ONLY_OPTIONS: PhotoOnlyOption[] = [
   { id: "photos-20", photoCount: "20 stills", sizeLabel: "0–1,000 sq ft", price: 149 },
-  { id: "photos-25", photoCount: "25 stills", sizeLabel: "1,000–2,500 sq ft", price: 169 },
-  { id: "photos-30", photoCount: "30 stills", sizeLabel: "2,100–3,000 sq ft", price: 194 },
-  { id: "photos-35", photoCount: "35 stills", sizeLabel: "3,000–4,000 sq ft", price: 219 },
-  { id: "photos-40", photoCount: "40 stills", sizeLabel: "5,000+ sq ft", price: 239 },
-  { id: "photos-45", photoCount: "45 stills", price: 259 },
-  { id: "photos-50", photoCount: "50 stills", price: 289 },
+  { id: "photos-25", photoCount: "25 stills", sizeLabel: "1,001–2,000 sq ft", price: 169 },
+  { id: "photos-30", photoCount: "30 stills", sizeLabel: "2,001–3,000 sq ft", price: 194 },
+  { id: "photos-35", photoCount: "35 stills", sizeLabel: "3,001–4,000 sq ft", price: 219 },
+  { id: "photos-40", photoCount: "40 stills", sizeLabel: "4,001–6,000 sq ft", price: 239 },
+  { id: "photos-45", photoCount: "45 stills", sizeLabel: "6,001–8,000 sq ft", price: 259 },
+  { id: "photos-50", photoCount: "50 stills", sizeLabel: "8,001+ sq ft", price: 289 },
 ];
 
 export const ADD_ONS = {

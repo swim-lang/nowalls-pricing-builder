@@ -49,12 +49,24 @@ try {
   assert.deepEqual(PACKAGE_CONFIG.packages.contentCreator.variants.map((item) => item.price), [1295, 1595, 1795]);
   assert.deepEqual(PHOTO_ONLY_OPTIONS.map((item) => item.price), [149, 169, 194, 219, 239, 259, 289]);
   assert.deepEqual(
+    PHOTO_ONLY_OPTIONS.map((item) => item.sizeLabel),
+    PACKAGE_CONFIG.packages.starter.variants.map((item) => item.label),
+    "Photo-only options must use the same seven square-footage bands as the listing packages",
+  );
+  assert.ok(
+    PACKAGE_CONFIG.packages.contentCreator.purpose.includes("complete listing package"),
+    "Content Creator must be described as a listing package",
+  );
+  assert.ok(PACKAGE_CONFIG.packages.contentCreator.includes.includes("Professional horizontal + vertical photos"));
+  assert.ok(PACKAGE_CONFIG.packages.contentCreator.includes.includes("Agent-branded property website + marketing kit"));
+  assert.deepEqual(
     [ADD_ONS.classicVideo.price, ADD_ONS.cinematicVideo.price, ADD_ONS.influencerVideo.price, ADD_ONS.lifestyleVideo.price],
     [249, 349, 449, 595],
   );
 
   const expectRecommendation = (answers, expectedPackage, expectedPrice, expectedPhotos, expectedStarting = false) => {
     const result = getRecommendation(answers);
+    assert.equal(result.kind, "package");
     assert.equal(result.package.id, expectedPackage);
     assert.equal(result.estimatedPrice, expectedPrice);
     assert.equal(result.isStartingPrice, expectedStarting);
@@ -111,6 +123,18 @@ try {
     true,
   );
 
+  const monthlyRecommendation = getRecommendation({
+    propertyType: "standard",
+    goal: "monthly_content",
+    socialImportance: "major",
+    size: "2001_3000",
+    knownNeeds: ["monthly_content", "long_form", "social_reels"],
+  });
+  assert.equal(monthlyRecommendation.kind, "monthly-content");
+  assert.equal(monthlyRecommendation.title, "Monthly Content Sessions");
+  assert.equal(monthlyRecommendation.serviceLabel, "Separate non-listing service");
+  assert.equal("package" in monthlyRecommendation, false, "Monthly content must not select an Aryeo listing package");
+
   expectRecommendation(
     { propertyType: "land", goal: "essentials_only", socialImportance: "not_important", size: "not_sure", knownNeeds: ["photos", "drone"] },
     "lot",
@@ -131,7 +155,7 @@ try {
     209,
   );
 
-  console.log("No Walls September pricing tiers and review-mode recommendations verified.");
+  console.log("No Walls confirmed pricing tiers and review-mode recommendations verified.");
 } finally {
   await rm(tempDirectory, { recursive: true, force: true });
 }

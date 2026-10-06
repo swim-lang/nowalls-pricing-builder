@@ -1,12 +1,12 @@
 # No Walls Pricing Builder
 
-A private, review-only recommendation concept for No Walls' September 2026 pricing.
+A private, review-only recommendation concept for No Walls' confirmed 2026 pricing structure.
 
 ## Current review phase
 
-- Package names, square-footage tiers, photo counts, Creator tiers, and package add-ons mirror Brian's September v2 pricing, rechecked on September 29, 2026.
+- Package names, square-footage tiers, photo counts, Creator tiers, package add-ons, and pre-listing prices reflect Brian's confirmed structure as of October 6, 2026.
 - The à-la-carte section now includes Brian's photo-only matrix plus Classic ($249), Cinematic ($349), Influencer ($449), and Lifestyle ($595) video options.
-- Brian's latest Notion page contains a Pre Listing Packages heading but no package rows. The review UI therefore preserves the three prices currently published on the live No Walls pricing page and labels them for confirmation.
+- Content Creator is presented as a complete listing package; monthly content sessions remain a separate custom service and never route into an Aryeo listing package.
 - The UI is intentionally review-only. It does not collect customer details, create Aryeo sessions, or change the restored production order form.
 - The Vercel endpoint also rejects session creation while `PRICING_REVIEW_ONLY` is enabled in `shared/aryeoCatalog.ts`.
 - The project retains the tested Aryeo session implementation for a later, explicitly approved connection phase.
@@ -42,7 +42,7 @@ npm test
 npm run build
 ```
 
-The tests verify the September price matrix, recommendation behavior, review-only endpoint, supported Aryeo payload, trusted redirect URLs, and the browser/server credential boundary.
+The tests verify the confirmed price matrix, recommendation behavior, review-only endpoint, supported Aryeo payload, trusted redirect URLs, and the browser/server credential boundary.
 
 ## Deployment
 
