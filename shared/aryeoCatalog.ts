@@ -1,4 +1,4 @@
-export const PRICING_CATALOG_REVIEWED_AT = "2026-10-06";
+export const PRICING_CATALOG_REVIEWED_AT = "2026-10-21";
 export const PRICING_REVIEW_ONLY = true;
 
 // This is the private prototype form. Brian's restored production form is intentionally
@@ -122,7 +122,7 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
       pricingMode: "square-footage",
       includes: ["Professional photos", "Agent-branded property website", "2D floor plan"],
       variants: squareFootageVariants(
-        { under_1000: 195, "1001_2000": 229, "2001_3000": 265, "3001_4000": 300, "4000_6000": 335, "6001_8000": 370, over_8000: 405 },
+        { under_1000: 195, "1001_2000": 229, "2001_3000": 265, "3001_4000": 300, "4000_6000": 355, "6001_8000": 425, over_8000: 495 },
         { under_1000: 25, "1001_2000": 30, "2001_3000": 35, "3001_4000": 40, "4000_6000": 45, "6001_8000": 50, over_8000: 55 },
         30,
       ),
@@ -145,7 +145,7 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
       ],
       selectionHint: "Choose the video format and 3D-tour provider during final booking.",
       variants: squareFootageVariants(
-        { under_1000: 460, "1001_2000": 495, "2001_3000": 530, "3001_4000": 565, "4000_6000": 600, "6001_8000": 635, over_8000: 670 },
+        { under_1000: 485, "1001_2000": 520, "2001_3000": 555, "3001_4000": 590, "4000_6000": 690, "6001_8000": 790, over_8000: 890 },
         { under_1000: 30, "1001_2000": 35, "2001_3000": 40, "3001_4000": 45, "4000_6000": 50, "6001_8000": 55, over_8000: 60 },
         120,
       ),
@@ -169,7 +169,7 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
       ],
       selectionHint: "Choose a cinematic format and 3D-tour provider during final booking.",
       variants: squareFootageVariants(
-        { under_1000: 714, "1001_2000": 749, "2001_3000": 784, "3001_4000": 819, "4000_6000": 854, "6001_8000": 889, over_8000: 924 },
+        { under_1000: 739, "1001_2000": 774, "2001_3000": 809, "3001_4000": 844, "4000_6000": 969, "6001_8000": 1094, over_8000: 1219 },
         { under_1000: 30, "1001_2000": 35, "2001_3000": 40, "3001_4000": 45, "4000_6000": 50, "6001_8000": 55, over_8000: 60 },
         180,
       ),
@@ -194,7 +194,7 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
       ],
       selectionHint: "Choose the 3D-tour provider during final booking.",
       variants: squareFootageVariants(
-        { under_1000: 990, "1001_2000": 1025, "2001_3000": 1060, "3001_4000": 1095, "4000_6000": 1130, "6001_8000": 1165, over_8000: 1200 },
+        { under_1000: 1005, "1001_2000": 1040, "2001_3000": 1075, "3001_4000": 1110, "4000_6000": 1260, "6001_8000": 1410, over_8000: 1560 },
         { under_1000: 30, "1001_2000": 35, "2001_3000": 40, "3001_4000": 45, "4000_6000": 50, "6001_8000": 55, over_8000: 60 },
         240,
       ),
@@ -217,7 +217,7 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
         "Agent-branded property website + marketing kit",
       ],
       variants: squareFootageVariants(
-        { under_1000: 609, "1001_2000": 644, "2001_3000": 679, "3001_4000": 714, "4000_6000": 749, "6001_8000": 784, over_8000: 819 },
+        { under_1000: 619, "1001_2000": 654, "2001_3000": 689, "3001_4000": 724, "4000_6000": 789, "6001_8000": 854, over_8000: 919 },
         { under_1000: 30, "1001_2000": 35, "2001_3000": 40, "3001_4000": 45, "4000_6000": 50, "6001_8000": 55, over_8000: 60 },
         150,
       ),

@@ -4,7 +4,8 @@ A private, review-only recommendation concept for No Walls' confirmed 2026 prici
 
 ## Current review phase
 
-- Package names, square-footage tiers, photo counts, Creator tiers, package add-ons, and pre-listing prices reflect Brian's confirmed structure as of October 6, 2026.
+- Starter, Essentials, Signature, Premier, and Influencer price ladders reflect Brian's October 21, 2026 reference.
+- Creator tiers, package add-ons, à-la-carte services, and pre-listing prices remain at their previously confirmed values because the new reference did not revise them.
 - The à-la-carte section now includes Brian's photo-only matrix plus Classic ($249), Cinematic ($349), Influencer ($449), and Lifestyle ($595) video options.
 - Content Creator is presented as a complete listing package; monthly content sessions remain a separate custom service and never route into an Aryeo listing package.
 - The UI is intentionally review-only. It does not collect customer details, create Aryeo sessions, or change the restored production order form.

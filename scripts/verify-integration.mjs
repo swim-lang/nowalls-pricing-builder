@@ -55,7 +55,7 @@ try {
   assert.equal(validated.address.country, "US");
   assert.equal(validated.packageConfig.aryeoProductTitle, "Essentials Package");
   assert.equal(validated.variant.label, "1,001–2,000 sq ft");
-  assert.equal(validated.variant.price, 495);
+  assert.equal(validated.variant.price, 520);
 
   const payload = buildAryeoSessionPayload(
     validated,

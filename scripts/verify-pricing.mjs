@@ -22,10 +22,10 @@ try {
 
   const packageExpectations = {
     starter: { price: 195, variants: 7 },
-    essentials: { price: 460, variants: 7 },
-    signature: { price: 714, variants: 7 },
-    premier: { price: 990, variants: 7 },
-    influencer: { price: 609, variants: 7 },
+    essentials: { price: 485, variants: 7 },
+    signature: { price: 739, variants: 7 },
+    premier: { price: 1005, variants: 7 },
+    influencer: { price: 619, variants: 7 },
     contentCreator: { price: 1295, variants: 3 },
     landPackage: { price: 495, variants: 1 },
     lot: { price: 209, variants: 1 },
@@ -41,11 +41,11 @@ try {
     assert.equal(packageConfig.variants.length, expected.variants, `${packageId} variant count changed`);
   }
 
-  assert.deepEqual(PACKAGE_CONFIG.packages.starter.variants.map((item) => item.price), [195, 229, 265, 300, 335, 370, 405]);
-  assert.deepEqual(PACKAGE_CONFIG.packages.essentials.variants.map((item) => item.price), [460, 495, 530, 565, 600, 635, 670]);
-  assert.deepEqual(PACKAGE_CONFIG.packages.signature.variants.map((item) => item.price), [714, 749, 784, 819, 854, 889, 924]);
-  assert.deepEqual(PACKAGE_CONFIG.packages.premier.variants.map((item) => item.price), [990, 1025, 1060, 1095, 1130, 1165, 1200]);
-  assert.deepEqual(PACKAGE_CONFIG.packages.influencer.variants.map((item) => item.price), [609, 644, 679, 714, 749, 784, 819]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.starter.variants.map((item) => item.price), [195, 229, 265, 300, 355, 425, 495]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.essentials.variants.map((item) => item.price), [485, 520, 555, 590, 690, 790, 890]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.signature.variants.map((item) => item.price), [739, 774, 809, 844, 969, 1094, 1219]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.premier.variants.map((item) => item.price), [1005, 1040, 1075, 1110, 1260, 1410, 1560]);
+  assert.deepEqual(PACKAGE_CONFIG.packages.influencer.variants.map((item) => item.price), [619, 654, 689, 724, 789, 854, 919]);
   assert.deepEqual(PACKAGE_CONFIG.packages.contentCreator.variants.map((item) => item.price), [1295, 1595, 1795]);
   assert.deepEqual(PHOTO_ONLY_OPTIONS.map((item) => item.price), [149, 169, 194, 219, 239, 259, 289]);
   assert.deepEqual(
@@ -83,35 +83,35 @@ try {
   expectRecommendation(
     { propertyType: "standard", goal: "polished", socialImportance: "not_important", size: "2001_3000", knownNeeds: ["photos", "floor_plan"] },
     "essentials",
-    530,
+    555,
     "40 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "sell_fast", socialImportance: "not_important", size: "6001_8000", knownNeeds: ["video", "drone", "website"] },
     "signature",
-    889,
+    1094,
     "55 photos",
   );
 
   expectRecommendation(
     { propertyType: "luxury", goal: "premium", socialImportance: "major", size: "over_8000", knownNeeds: ["video", "drone", "website", "social_reels"] },
     "premier",
-    1200,
+    1560,
     "60 photos",
   );
 
   expectRecommendation(
     { propertyType: "standard", goal: "personal_brand", socialImportance: "major", size: "3001_4000", knownNeeds: ["social_reels"] },
     "influencer",
-    714,
+    724,
     "45 photos",
   );
 
   expectRecommendation(
     { propertyType: "short_term_rental", goal: "premium", socialImportance: "very", size: "4000_6000", knownNeeds: ["photos", "video"] },
     "influencer",
-    749,
+    789,
     "50 photos",
   );
 
