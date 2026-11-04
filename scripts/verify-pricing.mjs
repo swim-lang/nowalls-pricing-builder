@@ -43,6 +43,11 @@ try {
 
   assert.deepEqual(PACKAGE_CONFIG.packages.starter.variants.map((item) => item.price), [195, 229, 265, 300, 355, 425, 495]);
   assert.deepEqual(PACKAGE_CONFIG.packages.essentials.variants.map((item) => item.price), [485, 520, 555, 590, 690, 790, 890]);
+  assert.deepEqual(
+    PACKAGE_CONFIG.packages.essentials.includes.filter((item) => /Classic|Matterport|Zillow/.test(item)),
+    ["Choose one: Classic video or reel, or Matterport or Zillow 3D tour"],
+    "Essentials must present video/reel and 3D as one either/or choice",
+  );
   assert.deepEqual(PACKAGE_CONFIG.packages.signature.variants.map((item) => item.price), [739, 774, 809, 844, 969, 1094, 1219]);
   assert.deepEqual(PACKAGE_CONFIG.packages.premier.variants.map((item) => item.price), [1005, 1040, 1075, 1110, 1260, 1410, 1560]);
   assert.deepEqual(PACKAGE_CONFIG.packages.influencer.variants.map((item) => item.price), [619, 654, 689, 724, 789, 854, 919]);

@@ -541,37 +541,31 @@ function IntroScreen({ onStart }: { onStart: () => void }) {
               <img src={NO_WALLS_FAVICON_URL} alt="" className="h-8 w-8 rounded-lg bg-white" />
             </div>
 
-            <div className="mt-6 h-[430px] overflow-hidden sm:h-[470px]">
-              <div className="package-scroll-track flex flex-col gap-3">
-                {[0, 1].map((setIndex) => (
-                  <div key={setIndex} className="grid gap-3" aria-hidden={setIndex === 1}>
-                    {availablePackages.map((packageItem) => {
-                      const pricing = getPackagePricing(packageItem);
-                      return (
-                        <div
-                          key={`${setIndex}-${packageItem.id}`}
-                          className="flex h-[88px] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">{packageItem.category.replace("-", " ")}</p>
-                            <p className="mt-1 text-lg font-semibold leading-6 tracking-normal text-white">{packageItem.name}</p>
-                          </div>
-                          <div className="shrink-0 text-right">
-                            <p className="text-xs text-white/45">Starting at</p>
-                            <p className="mt-1 text-lg font-semibold">${pricing.price.toLocaleString()}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
+            <div className="mt-6 grid gap-2">
+              {availablePackages.map((packageItem) => {
+                const pricing = getPackagePricing(packageItem);
+                return (
+                  <div
+                    key={packageItem.id}
+                    className="flex h-[62px] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.06] px-4 sm:h-[68px]"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-white/45">{packageItem.category.replace("-", " ")}</p>
+                      <p className="mt-0.5 text-base font-semibold leading-5 tracking-normal text-white sm:text-lg">{packageItem.name}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[0.65rem] text-white/45">Starting at</p>
+                      <p className="mt-0.5 text-base font-semibold sm:text-lg">${pricing.price.toLocaleString()}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
 
-      <PricingOverview onBuild={onStart} />
+      <PricingOverview />
     </div>
   );
 }
@@ -838,6 +832,15 @@ function MonthlyContentPanel({ recommendation }: { recommendation: MonthlyConten
             <p className="mt-2 font-semibold">{recommendation.title}</p>
             <p className="mt-1 text-sm text-white/55">{recommendation.priceLabel} · {recommendation.serviceLabel}</p>
           </div>
+          <a
+            href="https://nowallsrealestate.com/contact"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-[#111011] transition hover:bg-[#d6dbdc]"
+          >
+            Start a custom inquiry
+            <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </a>
         </div>
       </div>
     </div>

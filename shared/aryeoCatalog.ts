@@ -137,13 +137,12 @@ export const PACKAGE_CONFIG: { packages: Record<PackageId, PackageConfig> } = {
       pricingMode: "square-footage",
       includes: [
         "Professional photos",
-        "Classic horizontal video or Classic vertical reel",
-        "Matterport or Zillow 3D tour",
+        "Choose one: Classic video or reel, or Matterport or Zillow 3D tour",
         "2D floor plan",
         "Virtual twilight",
         "Agent-branded property website + marketing kit",
       ],
-      selectionHint: "Choose the video format and 3D-tour provider during final booking.",
+      selectionHint: "Choose either a Classic horizontal video, Classic vertical reel, Matterport 3D tour, or Zillow 3D tour during final booking.",
       variants: squareFootageVariants(
         { under_1000: 485, "1001_2000": 520, "2001_3000": 555, "3001_4000": 590, "4000_6000": 690, "6001_8000": 790, over_8000: 890 },
         { under_1000: 30, "1001_2000": 35, "2001_3000": 40, "3001_4000": 45, "4000_6000": 50, "6001_8000": 55, over_8000: 60 },
